@@ -1,0 +1,23 @@
+{
+  "mode": "jtbc",
+  "phase": "PROPOSAL",
+  "project_code": "JTBC-YYYY-NNN",
+  "project_name": "{{project_name}}",
+  "client_name": "{{client_name}}",
+  "created_at": "{{today}}",
+  "active_gate": null,
+  "active_ringi": [],
+  "active_wbs_task": null,
+  "active_incidents": [],
+  "roster": {
+    "shacho": 1,
+    "bucho": 1,
+    "kacho": 1,
+    "shunin": 1,
+    "tantou": 1,
+    "ses": 0
+  },
+  "approvals": {},
+  "client_reviews": {},
+  "deliverables": {}
+}

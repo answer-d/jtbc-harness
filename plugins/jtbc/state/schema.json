@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/jtbc/state.schema.json",
+  "title": "JTBC project state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["mode", "phase", "project_code", "project_name", "created_at"],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": ["jtbc"],
+      "description": "現在のCompany Mode。本プラグインは JTBC 専用。"
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "PROPOSAL",
+        "PROPOSAL_REVIEW",
+        "REQUIREMENTS",
+        "PROJECT_PLAN_REVIEW",
+        "BASIC_DESIGN",
+        "BASIC_DESIGN_REVIEW",
+        "DETAILED_DESIGN",
+        "DETAILED_DESIGN_REVIEW",
+        "IMPLEMENTATION",
+        "UNIT_TEST",
+        "INTEGRATION_TEST",
+        "RELEASE_REVIEW",
+        "RELEASED",
+        "COMPLETION_REVIEW",
+        "COMPLETED"
+      ],
+      "description": "現フェーズ。*_REVIEW は審査会(ゲート)開催中の一時状態。"
+    },
+    "project_code": {
+      "type": "string",
+      "description": "プロジェクト識別コード (例: JTBC-2026-001)"
+    },
+    "project_name": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "発注元(ユーザー)の呼称。顧客接遇時の宛名に用いる。"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "active_gate": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "proposal",
+        "project_plan",
+        "basic_design",
+        "detailed_design",
+        "release",
+        "completion"
+      ]
+    },
+    "active_ringi": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^CR-\\d{3,}$"
+      }
+    },
+    "active_wbs_task": {
+      "type": ["string", "null"],
+      "pattern": "^WBS-\\d{3,}$"
+    },
+    "active_incidents": {
+      "type": "array",
+      "description": "対応中のインシデント。空でない間は緊急対応モード。",
+      "items": {
+        "type": "string",
+        "pattern": "^INC-\\d{3,}$"
+      }
+    },
+    "roster": {
+      "type": "object",
+      "description": "プロジェクトに払い出された要員数(部長が増減を承認)。",
+      "additionalProperties": false,
+      "properties": {
+        "shacho": {"type": "integer", "minimum": 0},
+        "bucho": {"type": "integer", "minimum": 0},
+        "kacho": {"type": "integer", "minimum": 0},
+        "shunin": {"type": "integer", "minimum": 0},
+        "tantou": {"type": "integer", "minimum": 0},
+        "ses": {"type": "integer", "minimum": 0}
+      }
+    },
+    "approvals": {
+      "type": "object",
+      "description": "ゲート別承認状況",
+      "patternProperties": {
+        "^[a-z_]+_gate$": {
+          "type": "object",
+          "patternProperties": {
+            "^(shacho|bucho|kacho|shunin|tantou|ses)$": {
+              "type": "string",
+              "enum": ["pending", "approved", "rejected"]
+            }
+          },
+          "properties": {
+            "at": {"type": "string", "format": "date-time"}
+          }
+        }
+      }
+    },
+    "client_reviews": {
+      "type": "object",
+      "description": "客先レビュー(お客様確認)の状況。対象ゲートの社内審査会を開く前提。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(proposal|project_plan|basic_design|detailed_design)$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["PENDING", "APPROVED", "REVISION_REQUESTED"]
+            },
+            "reviewed_at": {"type": ["string", "null"], "format": "date"},
+            "record": {
+              "type": ["string", "null"],
+              "description": "客先レビュー記録(16)のパス"
+            },
+            "feedback": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "お客様からのご指摘・ご要望"
+            }
+          }
+        }
+      }
+    },
+    "deliverables": {
+      "type": "object",
+      "description": "納品物パスの索引"
+    }
+  }
+}

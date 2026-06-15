@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/phase_guard.py",
+            "description": "現フェーズで編集禁止のパスへのEdit/Writeを阻止"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/role_guard.py",
+            "description": "現在のagent役職に許可されたパス以外への書込みを阻止"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/ringi_guard.py",
+            "description": "未承認の変更管理票が必要な対象への編集を阻止"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/incident_guard.py",
+            "description": "緊急対応中(active_incidents非空)に前進系ガバナンス文書の編集を阻止"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/superior_visit.py",
+            "description": "上長視察(社長/部長)の確率的発生"
+          }
+        ]
+      }
+    ]
+  }
+}

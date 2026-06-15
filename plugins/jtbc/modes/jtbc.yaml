@@ -1,0 +1,232 @@
+name: jtbc
+displayName: 日本の伝統的大企業モード
+description: |
+  AIエージェントによるソフトウェア開発に、5階層の役職構造(+外注SES)、
+  フェーズゲート、稟議による承認フロー、各種会議体、インシデント対応を
+  適用するモード。本プラグインは JTBC 専用であり、他モードは持たない。
+  目的は AI の暴走防止・要件逸脱防止・設計品質向上・意思決定の記録・組織的開発。
+
+roles:
+  - shacho   # 社長
+  - bucho    # 部長
+  - kacho    # 課長
+  - shunin   # 主任
+  - tantou   # 担当
+  - ses      # 外注SES (低コストモデル)
+
+agent_name_map:
+  shacho: jtbc-shacho
+  bucho: jtbc-bucho
+  kacho: jtbc-kacho
+  shunin: jtbc-shunin
+  tantou: jtbc-tantou
+  ses: jtbc-ses
+
+# 工程フェーズ。*_REVIEW は審査会(ゲート)開催中の一時状態。
+phases:
+  - PROPOSAL              # 提案
+  - PROPOSAL_REVIEW       # 提案審査
+  - REQUIREMENTS          # 要件定義
+  - PROJECT_PLAN_REVIEW   # PJ計画審査
+  - BASIC_DESIGN          # 基本設計
+  - BASIC_DESIGN_REVIEW   # 基本設計審査
+  - DETAILED_DESIGN       # 詳細設計
+  - DETAILED_DESIGN_REVIEW # 詳細設計審査
+  - IMPLEMENTATION        # 実装
+  - UNIT_TEST             # 単体テスト
+  - INTEGRATION_TEST      # 総合テスト
+  - RELEASE_REVIEW        # リリース判定会
+  - RELEASED              # リリース済
+  - COMPLETION_REVIEW     # PJ完了審査
+  - COMPLETED             # 完了
+
+# ゲート(審査会)。approvers は当該審査フェーズで ◎/○ が付く全役職。
+# ◎ = 招集・進行・起案責任者(owner) / ○ = 審査・承認参加者。
+# owner(◎)は審査会の招集・進行・起案責任者であり、approvers にも含まれる。
+# owner の承認は「自分の起案に責任を持つ」ためのものであり、
+# 自己承認は仕様(バグではない)。
+#
+# client_review: 当該ゲート(社内審査会)を開く前に必須となる「客先レビュー」。
+#   課長(窓口)が成果物をお客様(ユーザー)へ提示し、確認・承認を取る工程。
+#   承認(APPROVED)が state.json#client_reviews[<gate>] に記録されるまで
+#   /jtbc:gate <gate> は開催できない(顧客版の根回し)。
+#   client_review を持たないゲート(release/completion)は別途、客先向け会議で対応する。
+gates:
+  proposal:                       # 提案審査
+    previous_phase: PROPOSAL
+    review_phase: PROPOSAL_REVIEW
+    next_phase: REQUIREMENTS
+    owner: kacho
+    required_documents: [00_proposal]
+    approvers: [kacho, bucho, shacho]
+    client_review:                # 提案審査の前提: 客先レビュー
+      reviews: 提案内容・プロジェクト計画方針
+      documents: [00_proposal]
+      facilitator: kacho
+      record_document: 16_client_review
+      outcomes: [APPROVED, REVISION_REQUESTED]
+  project_plan:                   # PJ計画審査
+    previous_phase: REQUIREMENTS
+    review_phase: PROJECT_PLAN_REVIEW
+    next_phase: BASIC_DESIGN
+    owner: kacho
+    required_documents: [01_project_plan, 02_requirements, 06_risk_register]
+    approvers: [kacho, bucho, shunin]
+    client_review:                # PJ計画審査の前提: 客先レビュー
+      reviews: 要件定義書
+      documents: [02_requirements]
+      facilitator: kacho
+      record_document: 16_client_review
+      outcomes: [APPROVED, REVISION_REQUESTED]
+  basic_design:                   # 基本設計審査
+    previous_phase: BASIC_DESIGN
+    review_phase: BASIC_DESIGN_REVIEW
+    next_phase: DETAILED_DESIGN
+    owner: kacho
+    required_documents: [03_basic_design, 07_issue_log]
+    approvers: [kacho, bucho]
+    client_review:                # 基本設計審査の前提: 客先レビュー
+      reviews: 基本設計書
+      documents: [03_basic_design]
+      facilitator: kacho
+      record_document: 16_client_review
+      outcomes: [APPROVED, REVISION_REQUESTED]
+  detailed_design:                # 詳細設計審査
+    previous_phase: DETAILED_DESIGN
+    review_phase: DETAILED_DESIGN_REVIEW
+    next_phase: IMPLEMENTATION
+    owner: shunin
+    required_documents: [04_detailed_design, 05_wbs, 09_test_plan]
+    approvers: [kacho, shunin, bucho]
+    client_review:                # 詳細設計審査の前提: 客先レビュー
+      reviews: 詳細設計書
+      documents: [04_detailed_design]
+      facilitator: kacho
+      record_document: 16_client_review
+      outcomes: [APPROVED, REVISION_REQUESTED]
+  release:                        # リリース判定会
+    previous_phase: INTEGRATION_TEST
+    review_phase: RELEASE_REVIEW
+    next_phase: RELEASED
+    owner: kacho
+    required_documents: [10_test_report, 11_deliverables_list]
+    approvers: [kacho, shunin, bucho, shacho]
+  completion:                     # PJ完了審査
+    previous_phase: RELEASED
+    review_phase: COMPLETION_REVIEW
+    next_phase: COMPLETED
+    owner: kacho
+    required_documents: [12_lessons_learned, 13_completion_approval]
+    approvers: [kacho, bucho, shacho]
+    extra_requirements:
+      lessons_min_approved: 3
+
+# ゲートを伴わない工程内遷移(/jtbc:phase next で進む)。
+# 実装→単体テスト→総合テストは主任が完了を確認して進める。
+linear_transitions:
+  - {from: IMPLEMENTATION, to: UNIT_TEST, owner: shunin}
+  - {from: UNIT_TEST, to: INTEGRATION_TEST, owner: shunin}
+
+ringi_required_for:
+  - requirement_change
+  - design_change
+  - tech_stack_change
+  - scope_change
+  - effort_increase
+
+ringi_workflow:
+  requirement: [shunin, kacho, bucho, shacho]
+  design:      [shunin, kacho, bucho]
+  tech_stack:  [shunin, kacho, bucho]
+  scope:       [kacho, bucho, shacho]
+  effort:      [shunin, kacho, bucho]
+
+# 会議体。frequency: high|medium|low、audience: internal|client。
+events:
+  recurring:
+    project_internal_standup:     # プロジェクト内部定例
+      display: プロジェクト内部定例
+      facilitator: shunin
+      participants: [kacho, tantou, ses]
+      audience: internal
+      frequency: high
+      minutes_required: true
+    client_regular_meeting:       # プロジェクト客先定例
+      display: プロジェクト客先定例
+      facilitator: kacho
+      participants: [user, shunin, tantou]
+      audience: client
+      frequency: medium
+      minutes_required: true
+    internal_status_review:       # 社内プロジェクト状況報告定例
+      display: 社内プロジェクト状況報告定例
+      facilitator: kacho
+      participants: [bucho, shunin, tantou]
+      audience: internal
+      frequency: medium
+      minutes_required: true
+      corrective_action_owner: kacho
+    board_meeting:                # 社内役員会議
+      display: 社内役員会議
+      facilitator: bucho
+      participants: [shacho]
+      audience: internal
+      frequency: low
+      minutes_required: true
+  event_driven:
+    client_incident_meeting:      # 客先報告会議
+      display: 客先報告会議
+      facilitator: kacho
+      participants: [shunin, tantou]
+      audience: client
+      trigger: issue_or_incident
+      minutes_required: true
+  random:
+    superior_visit:               # 上長視察
+      display: 上長視察
+      actors: [shacho, bucho]
+      targets: [kacho, shunin]
+      probability:
+        shacho: very_rare         # 社長: ごく稀
+        bucho: rare               # 部長: 稀
+      effect: subordinates_become_formal
+
+# インシデント対応。社内ルール違反・作業中の事故を検知したら発動。
+incident:
+  triggers:
+    - company_rule_violation      # 社内規程違反
+    - work_accident               # 作業中の事故(テスト破壊/データ消失/誤デプロイ等)
+  flow:
+    - immediate_report_to_user    # 1. まずユーザーへ緊急一報
+    - periodic_status_report      # 2. 解決まで部長/課長が定期状況報告
+    - root_cause_analysis         # 3. 根本原因分析(なぜなぜ分析)
+    - incident_report_to_user     # 4. 障害報告書(顛末+再発防止策)をユーザーへ提出
+  status_reporter: [bucho, kacho]
+  apology_by: [bucho, kacho]      # 重篤時は部長+課長で謝罪
+  rca_method: naze_naze
+  closing_document: 14_incident_report
+
+deliverables_minimum:
+  - source_code
+  - proposal
+  - project_plan
+  - requirements
+  - basic_design
+  - detailed_design
+  - wbs
+  - test_plan
+  - test_report
+  - release_note
+  - lessons_learned
+  - completion_approval
+
+documents_required: ["00", "01", "02", "03", "04", "05", "06", "07", "09", "10", "11", "12", "13"]
+
+policies:
+  buffer_minimum_pct: 20
+  budget_buffer_pct: 10
+  lessons_minimum: 3
+  enforce_traceability: true
+  src_writable_phases: [IMPLEMENTATION, UNIT_TEST, INTEGRATION_TEST]
+  # 追加要員(担当/外注SES)の払い出しは部長承認が必要
+  headcount_change_approver: bucho

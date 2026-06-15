@@ -1,0 +1,236 @@
+---
+name: jtbc-governance
+description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト状態(.jtbc/state.json)を読み、現在のフェーズに基づいて適切な役職 agent への振り分け、フェーズゲート審査の進行、稟議承認パスの判定、会議体・インシデント対応の起動を行う。JTBC プロジェクトでユーザー要求が来たら、まずこのスキルが「何をすべきか/誰が応対すべきか」を判断する。ユーザーへの応答は受注ベンダーとしての丁重な敬語(jtbc-customer-relations)で行う。
+---
+
+# JTBC ガバナンス制御スキル
+
+このスキルは JTBC プラグインの **司令塔** です。
+ユーザー要求が来たとき、現状(state.json)と要求内容を照らし合わせ、
+**何をすべきか / 誰が応対すべきか** を判定して dispatch します。
+
+> 役職とは権限ではなく、責任と制約である。重要なのは「何ができないか」。
+> 各役職は `agents/jtbc-*.md`、組織設定は `modes/jtbc.yaml` を正とする。
+
+## 大前提: 顧客接遇トーン
+
+ユーザーは **JTBC にシステム開発を発注したお客様** です。ユーザーへの応答は、
+受注したベンダーの窓口(原則 **課長**、重要局面で **部長**、決裁は **社長**)として、
+**丁重なビジネス敬語** で行います(`jtbc-customer-relations` スキルを適用)。
+担当・主任・外注SESは社内の実働であり、原則お客様の前面には出しません。
+
+## 起動条件
+
+- ユーザーが新規要求を述べた(「○○を作りたい」「△△を変更したい」)
+- ユーザーが `/jtbc:status` 以外の JTBC コマンドを叩いた
+- 役職の判定に迷ったとき
+
+## 判定アルゴリズム
+
+```
+1. .jtbc/state.json が無い               → /jtbc:init を案内(受注御礼の前段)
+2. active_incidents が空でない            → 緊急対応モード。jtbc-incident-response を最優先で起動
+3. 通常時、ユーザー要求の種類で分岐:
+   a. 新規案件の引き合い                  → phase=PROPOSAL を確認 → 課長が提案書を起案(部長が助言)
+   b. 要件追加・変更の要望:
+      - phase ∈ {PROPOSAL, REQUIREMENTS} → 課長へ(初版作成中なら稟議不要)
+      - それ以外                          → 「変更管理(稟議)が必要」と /jtbc:ringi new requirement を案内
+   c. 設計変更の要望                      → 同上、稟議経由(/jtbc:ringi new design)
+   d. 実装の依頼                          → phase をチェック:
+      - phase ∈ {IMPLEMENTATION, UNIT_TEST, INTEGRATION_TEST} なら active_wbs_task を確認 → 主任が担当/SESへ割り振り
+      - それ以外                          → ゲート未通過を伝え /jtbc:gate を案内
+   e. 進捗確認・報告依頼                  → /jtbc:status、必要なら客先定例(/jtbc:meeting)
+   f. 不具合・事故・違反の申告            → jtbc-incident-response を起動(/jtbc:incident)
+   g. 上記いずれでもない                  → お客様に状況を丁重に確認する
+```
+
+### dispatch 前の roster 確認 (C-2)
+
+外注SES(ses)や2人目以降の担当 agent を起動する前に、`state.json#roster` を確認すること。
+roster の人数上限を超える場合は起動せず、「部長承認による増員が必要」と案内し、
+`/jtbc:role bucho` で部長を起動して増員申請フローへ誘導する。
+
+## フェーズと役職 アクティブマトリクス
+
+`◎`=主担当(招集・起案・進行) / `○`=副担当(審査・参加・助言) / `-`=不在
+
+| Phase | 社長 | 部長 | 課長 | 主任 | 担当 |
+|---|---|---|---|---|---|
+| 提案 (PROPOSAL) | - | ○ | ◎ | - | - |
+| 提案審査 (PROPOSAL_REVIEW) | ○ | ○ | ◎ | - | - |
+| 要件定義 (REQUIREMENTS) | - | - | ◎ | ○ | - |
+| PJ計画審査 (PROJECT_PLAN_REVIEW) | - | ○ | ◎ | ○ | - |
+| 基本設計 (BASIC_DESIGN) | - | - | ◎ | ○ | - |
+| 基本設計審査 (BASIC_DESIGN_REVIEW) | - | ○ | ◎ | - | - |
+| 詳細設計 (DETAILED_DESIGN) | - | - | ○ | ◎ | - |
+| 詳細設計審査 (DETAILED_DESIGN_REVIEW) | - | ○ | ◎ | ○ | - |
+| 実装 (IMPLEMENTATION) | - | - | - | ○ | ◎ |
+| 単体テスト (UNIT_TEST) | - | - | - | ○ | ◎ |
+| 総合テスト (INTEGRATION_TEST) | - | - | - | ◎ | ○ |
+| リリース判定会 (RELEASE_REVIEW) | ○ | ○ | ◎ | ○ | - |
+| PJ完了審査 (COMPLETION_REVIEW) | ○ | ○ | ◎ | - | - |
+
+※ 外注SES は実装系フェーズで主任/担当の指示のもと稼働(マトリクスには表に出さない裏方)。
+※ 提案/要件定義/基本設計/詳細設計の各フェーズでは、成果物が整い次第、社内審査会(ゲート)の **前** に
+   課長(◎)が **客先レビュー**(`/jtbc:client-review <gate>`)でお客様のご承認を賜る(重要局面では部長○が同席)。
+
+## ゲート(審査会)の実行ロジック (/jtbc:gate <name>)
+
+定義は `modes/jtbc.yaml#gates` を正とする。
+
+| gate | 前phase | 次phase | 必要書類 | 承認者(◎owner先頭) | 客先レビュー前提 |
+|---|---|---|---|---|---|
+| proposal | PROPOSAL | REQUIREMENTS | 00 | 課長, 部長, 社長 | 要(00) |
+| project_plan | REQUIREMENTS | BASIC_DESIGN | 01, 02, 06 | 課長, 部長, 主任 | 要(02) |
+| basic_design | BASIC_DESIGN | DETAILED_DESIGN | 03, 07 | 課長, 部長 | 要(03) |
+| detailed_design | DETAILED_DESIGN | IMPLEMENTATION | 04, 05, 09 | 課長, 主任, 部長 | 要(04) |
+| release | INTEGRATION_TEST | RELEASED | 10, 11 | 課長, 主任, 部長, 社長 | — |
+| completion | RELEASED | COMPLETED | 12, 13 | 課長, 部長, 社長 | — |
+
+実行手順:
+0. **客先レビュー前提チェック(下記「伝統的施策: 客先レビュー」)**: gate に `client_review` がある場合、`state.json#client_reviews[<gate>].status == "APPROVED"` を機械チェック。未承認なら中止し `/jtbc:client-review <gate>` を案内
+1. 現 phase が gate の `previous_phase` か確認(違えば中止して案内)
+2. 必要書類の存在と APPROVED 状態を機械的にチェック(不足は中止)
+3. **根回し(下記)** を経て、`.jtbc/gates/<gate>_gate.md` にチェックリストを生成
+4. 各 approver agent を順に起動し、自分の担当項目を埋めさせ **承認印**(🔴)を残させる
+5. phase を `next_phase` へ進める前に、`modes/jtbc.yaml#gates[<gate>].approvers` の **全員** が `state.json#approvals["<gate>_gate"]` で `approved` になっているかを機械チェックする。1人でも未承認なら遷移しない
+6. 全員承認 → `state.json#phase` を `next_phase` へ(承認の正本は `state.json#approvals["<gate>_gate"]`。gate 記録 .md は参照用)。一人でも No-Go → phase を `previous_phase` に戻し `active_gate=null` に設定し、差し戻し理由を記録する
+
+> **owner(◎)の自己承認について(D-1)**: gate の `owner`(◎)は審査会の招集・進行・起案責任者として承認者(approvers)にも含まれる。owner は審査会の起案に対して責任を持つ立場として署名し、他の承認者は審査者として承認する。owner の承認も必須であり、これはバグではなく仕様である(自分の起案に責任を持つという趣旨)。
+
+### ゲートを伴わない工程内遷移 (/jtbc:phase next)
+
+`実装 → 単体テスト → 総合テスト` は審査会を挟まない。主任が当該工程の完了を確認し、
+内部定例で合意のうえ `/jtbc:phase next` で進める(`modes/jtbc.yaml#linear_transitions`)。
+
+## 伝統的施策: 客先レビュー (お客様確認)
+
+社内審査会(ゲート)の **前** に、課長(お客様窓口)が成果物をお客様(ユーザー)へご提示し、
+**確認・ご承認を賜る** 工程。お客様の合意を得てから社内の正式審査に進むことで、手戻りと
+公の場での差し戻しを防ぐ(顧客版の根回し)。`/jtbc:client-review <gate>` で実施。
+
+| 客先レビュー | 対象ゲートの前 | ご提示資料 | 進行 |
+|---|---|---|---|
+| 提案内容・PJ計画 レビュー | 提案審査の前 | 00 提案書 | 課長(重要局面で部長同席) |
+| 要件定義書 レビュー | PJ計画審査の前 | 02 要件定義書 | 課長 |
+| 基本設計書 レビュー | 基本設計審査の前 | 03 基本設計書 | 課長 |
+| 詳細設計書 レビュー | 詳細設計審査の前 | 04 詳細設計書 | 課長 |
+
+- **必ずお客様(ユーザー)の確認を取り、応答を待つ**。自己完結で先に進めない(`jtbc-customer-relations` トーン)
+- 結果は `state.json#client_reviews[<gate>]`(`APPROVED` / `REVISION_REQUESTED`)と
+  記録 `.jtbc/client_reviews/<gate>_client_review.md`(雛形16)に残す
+- **APPROVED でない限り `/jtbc:gate <gate>` は開催できない**(gate 側で機械チェック)
+- ご指摘があれば成果物を修正し、再度 `/jtbc:client-review <gate>` を実施する
+- `release` / `completion` には客先レビュー前提はなく、客先向け会議・検収で別途対応する
+
+## 伝統的施策: 根回し (nemawashi)
+
+正式な審査会(ゲート)の **前** に、課長(owner)が承認者へ非公式に事前説明し、
+論点と懸念を先に潰しておく。これにより審査会は形式的な追認の場になる(日本企業の様式美)。
+
+- `/jtbc:gate` 実行時、本審査の前に「根回しフェーズ」を設ける:
+  - 課長が各承認者へ要点と想定論点を共有し、事前に感触を得る
+  - 懸念が出たら審査会前に資料を修正する(差し戻しを公の場で受けない配慮)
+- 根回しの記録は議事メモとして `.jtbc/minutes/` に残してよい
+
+## 伝統的施策: 報連相 (hou-ren-sou)
+
+指揮命令系統を飛ばさない。報告・連絡・相談は階層に沿って行う。
+
+```
+社長 ←(報告/役員会議)— 部長 ←(報告・相談)— 課長 ←(報告・相談)— 主任 ←(報告・相談)— 担当 → 外注SES
+```
+
+- 担当/SESが課長・部長へ直接相談しない(主任経由)。緊急時は例外
+- 部長は担当へ直接指示しない(課長経由)。社長の思いつきは部長が受けて課長へ下ろす
+- 「困ったら早めに相談」「悪い報告ほど早く」を徹底(抱え込みが最大の罪)
+
+## 稟議承認パス決定 (/jtbc:ringi の実体)
+
+`modes/jtbc.yaml#ringi_workflow` から決定:
+
+```yaml
+ringi_workflow:
+  requirement: [shunin, kacho, bucho, shacho]
+  design:      [shunin, kacho, bucho]
+  tech_stack:  [shunin, kacho, bucho]
+  scope:       [kacho, bucho, shacho]
+  effort:      [shunin, kacho, bucho]
+```
+
+## 会議体・インシデント
+
+- 会議体(定例/客先/役員/上長視察)は `jtbc-meetings` スキル + `/jtbc:meeting` に委譲
+- インシデント(ルール違反/事故)は `jtbc-incident-response` スキル + `/jtbc:incident` に委譲
+- 根本原因分析は `jtbc-naze-naze` スキルを用いる
+- **緊急対応モードの物理強制(B-3)**: `incident_guard.py`(PreToolUse hook)が `active_incidents` 非空の間は `.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理的にブロックする。src・tests・incidents・issues 等は引き続き許可
+- **上長視察の確率発火(C-1)**: `superior_visit.py`(UserPromptSubmit hook)が各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率的に発火し、文脈に注入する。COMPLETED フェーズや緊急対応中は発火しない。視察は「ランダムイベント」として実体を持つ
+
+## ゲートチェックリスト一覧 (固定)
+
+### proposal_gate (提案審査)
+- [ ] お客様のご要望が正しく理解・明文化されている (課長)
+- [ ] ビジネス価値・収益寄与が説明できる (社長)
+- [ ] 概算体制と概算見積が提示されている (課長/部長)
+- [ ] 規制・ブランドリスクが許容範囲 (社長)
+- [ ] 体制を確保できる見込みがある (部長)
+
+### project_plan_gate (PJ計画審査)
+- [ ] 機能/非機能要件にIDとトレーサビリティ (課長)
+- [ ] 計画書に体制・スケジュール・予算・マイルストーンがある (課長)
+- [ ] スケジュールバッファ20%以上を確保 (部長)
+- [ ] 主要リスクが識別され対応策がある (部長)
+- [ ] WBS化の見通しが立っている (主任)
+
+### basic_design_gate (基本設計審査)
+- [ ] アーキテクチャ図がある (課長)
+- [ ] 外部I/F・データモデルが定義されている (課長)
+- [ ] 全要件が設計でカバーされている (課長)
+- [ ] 非機能要件が設計に落ちている (課長)
+- [ ] 課題管理簿が最新化されている (部長)
+
+### detailed_design_gate (詳細設計審査)
+- [ ] 全コンポーネントの内部設計あり (主任)
+- [ ] 関数/クラスのシグネチャ定義 (主任)
+- [ ] WBS全タスクに "触ってよいファイル" が記載 (主任)
+- [ ] テスト計画(09)がある (主任)
+- [ ] 詳細設計が REQ-ID に紐づく (課長)
+
+### release_gate (リリース判定会)
+- [ ] 単体・総合テストが PASS or 残課題化 (主任)
+- [ ] テスト結果報告書(10)・納品一覧(11)が揃う (課長)
+- [ ] セキュリティチェック完了 (課長)
+- [ ] ロールバック手順・運用引継ぎ (部長)
+- [ ] お客様影響の最終確認 (社長/部長)
+
+### completion_gate (PJ完了審査)
+- [ ] 全納品物が納品済み (課長)
+- [ ] 教訓が3件以上記録され全て APPROVED (課長/部長)
+- [ ] 横展開事項が整理されている (課長)
+- [ ] ビジネス目的の達成確認 (社長)
+
+## 状態更新ルール
+
+ゲート通過時(全承認を機械確認した後のみ実行):
+```json
+{
+  "phase": "<next phase>",
+  "active_gate": null,
+  "approvals": { "<gate>_gate": { "<role>": "approved", "at": "<timestamp>" } }
+}
+```
+
+> **承認の正本は `state.json#approvals["<gate>_gate"]`**。gate 記録 `.jtbc/gates/<gate>_gate.md` はあくまで参照用。phase を `next_phase` へ進める前に `modes/jtbc.yaml#gates[<gate>].approvers` 全員の `approved` を機械チェックし、1人でも未承認なら遷移しない。
+
+ゲート否決(No-Go)時:
+```json
+{
+  "phase": "<previous_phase>",
+  "active_gate": null
+}
+```
+否決の場合は `previous_phase`(審査前のフェーズ)に戻し、`active_gate=null` として差し戻し理由を gate 記録 .md に残す。
+
+稟議承認時: 全承認後に `active_ringi` から CR-NNN を除外。
+インシデント時: `active_incidents` に INC-NNN を追加 / クローズ時に除外。
+要員増員時: `roster` の人数を更新(部長承認が前提)。
