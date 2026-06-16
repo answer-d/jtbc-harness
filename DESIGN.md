@@ -479,7 +479,7 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 ```bash
 # ユーザー側の利用イメージ
 /plugin marketplace add answer-d/jtbc-harness
-/plugin install jtbc@jtbc-marketplace
+/plugin install jtbc@jtbc-harness
 ```
 
 ローカル開発では `plugins/jtbc/` をプラグイン読込先に配置すればよい(README参照)。

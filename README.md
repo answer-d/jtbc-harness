@@ -55,7 +55,7 @@
 
 ```bash
 /plugin marketplace add answer-d/jtbc-harness
-/plugin install jtbc@jtbc-marketplace
+/plugin install jtbc@jtbc-harness
 ```
 
 ### B. ローカル開発
