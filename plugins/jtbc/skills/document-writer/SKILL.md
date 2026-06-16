@@ -1,5 +1,5 @@
 ---
-name: jtbc-document-writer
+name: document-writer
 description: JTBC のドキュメント雛形を `.jtbc/` 配下に挿入する補助スキル。/jtbc:init や各 agent、各コマンドがテンプレを生成する際に呼ばれる。プレースホルダ ({{project_name}}, {{client_name}}, {{created_at}} 等) を実値で埋める。提案書・障害報告書・議事録を含む全テンプレートに対応。
 ---
 

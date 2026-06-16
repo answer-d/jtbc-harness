@@ -6,7 +6,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design|release|comp
 # /jtbc:gate
 
 フェーズゲート審査会を実行します。各ゲートは「必要書類 + 承認者 + チェックリスト」の3点セット。
-定義は `modes/jtbc.yaml#gates`、チェックリストは `skills/jtbc-governance/SKILL.md` を正とします。
+定義は `modes/jtbc.yaml#gates`、チェックリストは `skills/governance/SKILL.md` を正とします。
 
 ## 引数
 
@@ -76,7 +76,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design|release|comp
 
 ## チェックリスト雛形
 
-各ゲートの固定チェックリストは `skills/jtbc-governance/SKILL.md` の「ゲートチェックリスト一覧」を参照。
+各ゲートの固定チェックリストは `skills/governance/SKILL.md` の「ゲートチェックリスト一覧」を参照。
 
 例(proposal_gate):
 ```markdown

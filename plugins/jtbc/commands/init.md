@@ -75,7 +75,7 @@ argument-hint: "[project-name]"
 }
 ```
 
-4. テンプレ(`plugins/jtbc/templates/`)を `jtbc-document-writer` スキルで配置(プレースホルダ置換):
+4. テンプレ(`plugins/jtbc/templates/`)を `document-writer` スキルで配置(プレースホルダ置換):
 
    | コピー元 | コピー先 |
    |---|---|
@@ -109,7 +109,7 @@ argument-hint: "[project-name]"
 増員枠: 外注SES jtbc-ses(必要時に部長承認のうえ払い出し / 既定0名)
 ```
 
-6. **キックオフ**: 提案に向けたご要望のヒアリングを始める旨を、`jtbc-customer-relations`
+6. **キックオフ**: 提案に向けたご要望のヒアリングを始める旨を、`customer-relations`
    トーンでお客様へお伝えする(下記出力)。提案フェーズは課長が主担当(規模が大きければ
    主任に一部オフロード可)。**受注の御礼はここでは述べない**(提案ご承認時に申し上げる)。
 

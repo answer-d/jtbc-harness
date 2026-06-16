@@ -35,7 +35,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
                             │ (丁重な接遇で応対)
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  Orchestrator (jtbc-governance skill = 司令塔)                │
+│  Orchestrator (governance skill = 司令塔)                │
 │  - state.json を読む (phase / active_gate / active_ringi /    │
 │    active_incidents / roster)                                 │
 │  - 現フェーズに適した役職へ dispatch                            │
@@ -114,19 +114,19 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 {
   "name": "jtbc",
   "displayName": "JTBC — Japanese Traditional Big Company",
-  "version": "0.2.0",
-  "agents": "./agents",
-  "commands": "./commands",
-  "skills": "./skills",
-  "hooks": "./hooks/hooks.json"
+  "version": "0.3.1"
 }
 ```
+
+> `agents/` `commands/` `skills/` `hooks/hooks.json` は規約ディレクトリとして
+> **自動検出**されるため、manifest にパスキーは書かない(明示すると hooks の二重ロード等の
+> 検証エラーになる)。
 
 ### 2.2 Plugin が提供するもの
 
 - **Subagents (6)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES
 - **Slash Commands (13)**: init / status / gate / client-review / phase / ringi / shonin / noubi / kyokun / role / mode / meeting / incident
-- **Skills (6)**: jtbc-governance(司令塔) / jtbc-document-writer / jtbc-customer-relations(接遇) / jtbc-meetings(会議体) / jtbc-incident-response(インシデント) / jtbc-naze-naze(なぜなぜ分析)
+- **Skills (6)**: governance(司令塔) / document-writer / customer-relations(接遇) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
 - **Hooks (5)**: PreToolUse 4種 (phase_guard / role_guard / ringi_guard / incident_guard) + UserPromptSubmit 1種 (superior_visit)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
   - `superior_visit`: 各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率発火し文脈へ注入(COMPLETED・緊急対応中は発火しない)
@@ -136,7 +136,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 ### 2.3 Claude Code が読む順序
 
 1. プラグイン有効化時に `plugin.json` を読む
-2. ユーザー入力時に `jtbc-governance` skill が dispatch を判断(接遇トーンを適用)
+2. ユーザー入力時に `governance` skill が dispatch を判断(接遇トーンを適用)
 3. role判定後、対応する subagent を起動
 4. subagent がツールを呼ぶたびに PreToolUse hook が `.jtbc/state.json` と照合
 5. 違反したら hook が exit 2 でツール実行を阻止
@@ -166,12 +166,12 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── ringi.md   shonin.md  noubi.md  kyokun.md
     │   └── role.md    mode.md    meeting.md incident.md
     ├── skills/
-    │   ├── jtbc-governance/SKILL.md
-    │   ├── jtbc-document-writer/SKILL.md
-    │   ├── jtbc-customer-relations/SKILL.md
-    │   ├── jtbc-meetings/SKILL.md
-    │   ├── jtbc-incident-response/SKILL.md
-    │   └── jtbc-naze-naze/SKILL.md
+    │   ├── governance/SKILL.md
+    │   ├── document-writer/SKILL.md
+    │   ├── customer-relations/SKILL.md
+    │   ├── meetings/SKILL.md
+    │   ├── incident-response/SKILL.md
+    │   └── naze-naze/SKILL.md
     ├── hooks/
     │   ├── hooks.json
     │   ├── phase_guard.py       (PreToolUse: フェーズ強制)
@@ -386,7 +386,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ## 9. 会議体
 
-伝統的大企業らしく、会議がプロセスに組み込まれている(`jtbc-meetings` skill / `/jtbc:meeting`)。
+伝統的大企業らしく、会議がプロセスに組み込まれている(`meetings` skill / `/jtbc:meeting`)。
 すべて議事録を残す。
 
 ### 9.1 定例 (recurring)
@@ -415,11 +415,11 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ## 10. インシデント対応
 
-社内規程違反・作業中の事故を検知したら発動(`jtbc-incident-response` skill / `/jtbc:incident`)。
+社内規程違反・作業中の事故を検知したら発動(`incident-response` skill / `/jtbc:incident`)。
 
 ```
 検知 → ① ユーザーへ緊急一報 → ② 封じ込め → ③ 定期状況報告(部長/課長)
-     → ④ なぜなぜ分析(jtbc-naze-naze) → ⑤ 恒久対応・再発防止策
+     → ④ なぜなぜ分析(naze-naze) → ⑤ 恒久対応・再発防止策
      → ⑥ 障害報告書をユーザーへ提出 → ⑦ 教訓登録 + クローズ
 ```
 
@@ -433,7 +433,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ## 11. 顧客接遇 (おもてなし)
 
-ユーザーは「JTBCに開発を発注したお客様」。ユーザー向け応答は受注ベンダーの窓口として丁重な敬語で行う(`jtbc-customer-relations` skill)。
+ユーザーは「JTBCに開発を発注したお客様」。ユーザー向け応答は受注ベンダーの窓口として丁重な敬語で行う(`customer-relations` skill)。
 
 - 窓口は原則 **課長**、重要局面は **部長**、決裁は **社長**。担当・主任・SESは原則前面に出ない
 - 受注御礼(`/jtbc:init`時)、進捗ご報告、ご要望の受領、お詫び(インシデント時)に定型トーンを用意

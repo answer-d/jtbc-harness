@@ -20,7 +20,7 @@ argument-hint: "<shacho|bucho|kacho|shunin|tantou|ses>"
 
 1. `.jtbc/state.json#phase` を読む
 2. phase と role の整合をチェック(参考程度、強制はしない)。アクティブマトリクス
-   (`skills/jtbc-governance/SKILL.md`)に照らし、不在の役職を呼ぼうとしたら一言添える:
+   (`skills/governance/SKILL.md`)に照らし、不在の役職を呼ぼうとしたら一言添える:
    - phase=PROPOSAL で `tantou`/`ses` → 「まだ実装フェーズではありません。提案・要件が先です」
    - phase=IMPLEMENTATION で `shacho` → 「社長は実装には出てきません。要所(審査会)で登場します」
 

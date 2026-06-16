@@ -13,7 +13,7 @@ status: PENDING | APPROVED | REVISION_REQUESTED
 <!--
 - 作成者: 課長 (jtbc-kacho / お客様窓口)
 - 目的: 社内審査会(ゲート)の前に、成果物をお客様へご提示し、確認・ご承認を賜る
-- トーン: お客様向けの記録のため、丁重な敬語で記す (jtbc-customer-relations)
+- トーン: お客様向けの記録のため、丁重な敬語で記す (customer-relations)
 - 対象ゲート: 提案審査 / PJ計画審査 / 基本設計審査 / 詳細設計審査 の直前
 -->
 

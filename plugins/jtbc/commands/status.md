@@ -5,7 +5,7 @@ description: 現在のJTBCプロジェクトの状態(フェーズ/承認状況/
 # /jtbc:status
 
 `.jtbc/state.json` を読んで現状を一覧表示します。
-お客様向けにご報告する場合は `jtbc-customer-relations` の敬語トーンに整えます。
+お客様向けにご報告する場合は `customer-relations` の敬語トーンに整えます。
 
 ## 実行手順
 

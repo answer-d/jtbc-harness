@@ -5,8 +5,8 @@ argument-hint: "<open <severity> \"事象\" | status <INC> | report <INC> | reso
 
 # /jtbc:incident
 
-インシデント対応コマンド。プロセスの本体は `jtbc-incident-response` スキル、
-根本原因分析は `jtbc-naze-naze` スキルに従います。
+インシデント対応コマンド。プロセスの本体は `incident-response` スキル、
+根本原因分析は `naze-naze` スキルに従います。
 
 ## サブコマンド
 
@@ -19,7 +19,7 @@ argument-hint: "<open <severity> \"事象\" | status <INC> | report <INC> | reso
   1. `INC-NNN` を採番、`incident_report` を `.jtbc/incidents/INC-NNN.md` に生成
   2. `state.json#active_incidents` に `INC-NNN` を追加(= 緊急対応モード突入)
   3. 原因に関係する通常作業を停止
-  4. お客様へ第一報(`jtbc-customer-relations` のお詫びトーン、severity に応じ課長 or 部長名義):
+  4. お客様へ第一報(`customer-relations` のお詫びトーン、severity に応じ課長 or 部長名義):
 
 ```
 【ご報告】<事象>
@@ -36,7 +36,7 @@ argument-hint: "<open <severity> \"事象\" | status <INC> | report <INC> | reso
 
 ### `report <INC-NNN>`
 
-**なぜなぜ分析**(`jtbc-naze-naze`)で真因を究明し、障害報告書の第5〜7章を完成させる。
+**なぜなぜ分析**(`naze-naze`)で真因を究明し、障害報告書の第5〜7章を完成させる。
 再発防止策は 仕組み > 手順 > 教育 の順で立てる。重篤時は部長+課長連名のお詫びを添える。
 
 ### `resolve <INC-NNN>`
@@ -59,7 +59,7 @@ argument-hint: "<open <severity> \"事象\" | status <INC> | report <INC> | reso
 
 ## 何がインシデントか (トリガー)
 
-`jtbc-incident-response` スキルの社内規程(RULE-01〜07)違反、または作業中の事故
+`incident-response` スキルの社内規程(RULE-01〜07)違反、または作業中の事故
 (デグレ・データ消失・誤デプロイ・ビルド破壊・機密コミット・暴走 等)。
 hook がすり抜けた疑い、人為的バイパスも対象。
 

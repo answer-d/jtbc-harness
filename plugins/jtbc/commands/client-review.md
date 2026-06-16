@@ -9,7 +9,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 **確認・ご承認を賜る** 工程です。これは「顧客版の根回し」であり、お客様の合意を得てから
 社内の正式審査(ゲート)に進むことで、手戻りと公の場での差し戻しを防ぎます。
 
-定義は `modes/jtbc.yaml#gates[<gate>].client_review`、接遇トーンは `jtbc-customer-relations` を正とします。
+定義は `modes/jtbc.yaml#gates[<gate>].client_review`、接遇トーンは `customer-relations` を正とします。
 **お客様への応答は必ず丁重な敬語**で行ってください(社内口調で話さない)。
 
 ## 引数
@@ -61,7 +61,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 8. 結果による分岐:
    - **ご承認(APPROVED)** → `status: "APPROVED"`。次に `/jtbc:gate <gate>` で社内審査会を開催できる旨をご案内
      - **特に `proposal` のご承認は、お客様がご提案をお受け入れくださった = ご発注の確定(受注)** を意味する。
-       このタイミングで初めて **受注の御礼** を `jtbc-customer-relations` トーンで申し上げる(下記「提案ご承認」出力例)。
+       このタイミングで初めて **受注の御礼** を `customer-relations` トーンで申し上げる(下記「提案ご承認」出力例)。
        (`/jtbc:init` では御礼を述べない ―― 御礼が早すぎないよう、受注の確定はここで行う。)
    - **ご指摘あり・要修正(REVISION_REQUESTED)** → `status: "REVISION_REQUESTED"`、`feedback` にご指摘を記録。
      担当部署(課長/主任)が成果物を修正し、再度 `/jtbc:client-review <gate>` を実施する
