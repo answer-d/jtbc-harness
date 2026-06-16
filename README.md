@@ -54,7 +54,7 @@
 ### A. Marketplace 経由(将来の公式配布想定)
 
 ```bash
-/plugin marketplace add <owner>/jtbc-herness
+/plugin marketplace add answer-d/jtbc-herness
 /plugin install jtbc@jtbc-marketplace
 ```
 

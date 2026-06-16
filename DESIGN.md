@@ -478,7 +478,7 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 
 ```bash
 # ユーザー側の利用イメージ
-/plugin marketplace add <owner>/jtbc-herness
+/plugin marketplace add answer-d/jtbc-herness
 /plugin install jtbc@jtbc-marketplace
 ```
 
