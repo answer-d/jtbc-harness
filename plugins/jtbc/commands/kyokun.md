@@ -5,7 +5,7 @@ argument-hint: "<add \"問題\" \"原因\" \"対策\" | list | export>"
 
 # /jtbc:kyokun
 
-教訓登録簿(12_lessons_learned.md)の運用コマンド。
+教訓登録簿(lessons_learned.md)の運用コマンド。
 
 ## サブコマンド
 
@@ -14,7 +14,7 @@ argument-hint: "<add \"問題\" \"原因\" \"対策\" | list | export>"
 新しい教訓を追加します。
 
 動作:
-1. `.jtbc/lessons/12_lessons_learned.md` を Read (無ければテンプレから生成)
+1. `.jtbc/lessons/lessons_learned.md` を Read (無ければテンプレから生成)
 2. 次の連番 (`L-NNN`) を決定
 3. 以下のフォーマットで追記:
 
@@ -58,12 +58,12 @@ argument-hint: "<add \"問題\" \"原因\" \"対策\" | list | export>"
 
 タイトル: 詳細設計より実装が先行してWBS外ファイルが汚染された
 状態: DRAFT
-ファイル: .jtbc/lessons/12_lessons_learned.md
+ファイル: .jtbc/lessons/lessons_learned.md
 
 次のステップ: 課長(/jtbc:role kacho)と部長(/jtbc:role bucho)のレビューを受けてください。
 PJ完了審査(/jtbc:gate completion)では教訓が3件以上 APPROVED 状態である必要があります。
 根本原因の掘り下げには なぜなぜ分析(jtbc-naze-naze スキル)を使ってください。
-インシデント由来の教訓は、障害報告書(14)からの転記でも構いません。
+インシデント由来の教訓は、障害報告書からの転記でも構いません。
 ```
 
 ## 完了審査との関係

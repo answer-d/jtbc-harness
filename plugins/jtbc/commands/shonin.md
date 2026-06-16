@@ -40,7 +40,7 @@ approvals:
    - 次の承認者に状態を進める (`PENDING_<next_role>`)
    - **最終承認者の場合(B-1: ringi_guard との整合)**:
      1. CR 本文(影響範囲/対象パス欄)に **改訂対象ドキュメントの相対パス**
-        (例: `.jtbc/requirements/02_requirements.md`)が明記されていることを確認する。
+        (例: `.jtbc/requirements/requirements.md`)が明記されていることを確認する。
         記載がない場合は、承認者が Edit ツールで追記してから移動する。
         ※ この記載により `ringi_guard` が当該ドキュメントの改訂を許可する。
      2. frontmatter の `status:` を **`APPROVED`** に更新する(Edit ツールで行う)。
@@ -73,11 +73,11 @@ approvals:
 
 承認: 主任 ✅ / 課長 ✅ / 部長 ✅ / 社長 ✅
 status: APPROVED (frontmatter 更新済み)
-対象ドキュメント: .jtbc/requirements/02_requirements.md (ringi_guard 解除済み)
+対象ドキュメント: .jtbc/requirements/requirements.md (ringi_guard 解除済み)
 ファイル: .jtbc/changes/approved/CR-001.md
 
 この変更は実装可能になりました。
-WBS(05) に反映してください: /jtbc:role shunin で主任を呼んで影響タスクを追加
+WBS に反映してください: /jtbc:role shunin で主任を呼んで影響タスクを追加
 ```
 
 ## 出力例 (却下)

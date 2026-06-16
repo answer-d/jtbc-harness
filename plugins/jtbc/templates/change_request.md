@@ -54,9 +54,9 @@ approvals: []
   <!-- ringi_guard が照合し、承認後の改訂を解錠するパス。
        該当するものをすべて列挙すること。
        例:
-         - .jtbc/requirements/02_requirements.md
-         - .jtbc/designs/03_basic_design.md
-         - .jtbc/designs/04_detailed_design.md
+         - .jtbc/requirements/requirements.md
+         - .jtbc/designs/basic_design.md
+         - .jtbc/designs/detailed_design.md
        ここに記載した相対パスと approved/ 配下の CR の frontmatter が一致した場合のみ、
        ringi_guard は当該ドキュメントの改訂を許可する。 -->
   -

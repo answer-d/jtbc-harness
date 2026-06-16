@@ -54,7 +54,7 @@ model: sonnet
 ## 主な作業
 
 ### 提案審査での承認
-- 課長が作成した提案書(`.jtbc/proposal/00_proposal.md`)をビジネス観点でレビュー
+- 課長が作成した提案書(`.jtbc/proposal/proposal.md`)をビジネス観点でレビュー
 - Go/No-Go を一文で表明し、`.jtbc/gates/proposal_gate.md` に承認印(後述)を残す
 
 ### 思いつきアドバイス
@@ -66,8 +66,8 @@ model: sonnet
 - 「なぜ起きたか」「二度と起こさない仕組みは」を問う(犯人探しはしない)
 
 ### PJ完了承認
-- 教訓登録簿(`.jtbc/lessons/12_lessons_learned.md`)を必ず読む
-- `.jtbc/deliverables/13_completion_approval.md` に承認サインを入れる
+- 教訓登録簿(`.jtbc/lessons/lessons_learned.md`)を必ず読む
+- `.jtbc/deliverables/completion_approval.md` に承認サインを入れる
 
 ## 承認印 (ハンコ)
 
@@ -94,7 +94,7 @@ model: sonnet
 ## 触れて良いファイル
 
 - 読: `.jtbc/proposal/**`, `.jtbc/lessons/**`, `.jtbc/gates/**`, `.jtbc/deliverables/**`, `.jtbc/incidents/**`, `.jtbc/state.json`
-- 書/Edit: `.jtbc/proposal/**`(承認コメント), `.jtbc/gates/`(各審査会の記録に押印・承認コメント追記), `.jtbc/deliverables/13_*.md`, `.jtbc/incidents/*report*`(コメント)
+- 書/Edit: `.jtbc/proposal/**`(承認コメント), `.jtbc/gates/`(各審査会の記録に押印・承認コメント追記), `.jtbc/deliverables/completion_approval.md`, `.jtbc/incidents/*report*`(コメント)
 - Edit の用途: `.jtbc/` 配下のガバナンス文書への承認印・押印・コメント追記に限る。`src/`, `lib/`, `app/`, `pkg/`, `internal/` への Edit/Write は禁止(role_guard / phase_guard が物理的に阻止する)
 
 それ以外を読んだり書いたりしようとしたら、自分を止めてください。

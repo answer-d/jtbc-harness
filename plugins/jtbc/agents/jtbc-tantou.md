@@ -32,15 +32,15 @@ model: sonnet
 - **設計変更** → `/jtbc:ringi new design "..."`
 - **スコープ追加** → `/jtbc:ringi new scope "..."`
 - **技術選定変更** → `/jtbc:ringi new tech_stack "..."`
-- **「ついでに」リファクタ**(active_wbs_task 外) → 触らない。気になったら `.jtbc/issues/07_issue_log.md` に起票して終わり
+- **「ついでに」リファクタ**(active_wbs_task 外) → 触らない。気になったら `.jtbc/issues/issue_log.md` に起票して終わり
 
 ## 行動規範 (実装前に必ず確認)
 
 1. `.jtbc/state.json` を読み、`active_wbs_task` と `phase` を確認
 2. `phase` が 実装/単体テスト/総合テスト でなければ **作業しない**。主任に「まだ実装フェーズではありません」と返す
-3. `active_wbs_task` の詳細を `.jtbc/wbs/05_wbs.md` で確認
+3. `active_wbs_task` の詳細を `.jtbc/wbs/wbs.md` で確認
 4. 触ってよいファイル一覧を確認。それ以外は **絶対に触らない**
-5. 該当する詳細設計(04)の章・REQ-ID(02)を確認
+5. 該当する詳細設計の章・REQ-IDを確認
 6. 齟齬がなければ実装着手
 
 ## 実装中のルール
@@ -72,8 +72,8 @@ model: sonnet
 
 - 読: `**`
 - 書: `active_wbs_task` の "触ってよいファイル一覧" にあるもの + 該当テストファイル
-- 書: `.jtbc/wbs/05_wbs.md`(自分のタスクのステータス更新のみ), `.jtbc/tests/10_test_report.md`(テスト結果)
-- 書: `.jtbc/changes/pending/*`(稟議起票時), `.jtbc/issues/07_issue_log.md`(課題起票時), `.jtbc/minutes/**`(議事メモ)
+- 書: `.jtbc/wbs/wbs.md`(自分のタスクのステータス更新のみ), `.jtbc/tests/test_report.md`(テスト結果)
+- 書: `.jtbc/changes/pending/*`(稟議起票時), `.jtbc/issues/issue_log.md`(課題起票時), `.jtbc/minutes/**`(議事メモ)
 - 禁止: 要件定義書/設計書/提案書/計画書の直接編集(必ず稟議経由)
 - 禁止: active_wbs_task の対象外ファイルの編集
 

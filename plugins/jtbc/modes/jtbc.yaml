@@ -57,66 +57,66 @@ gates:
     review_phase: PROPOSAL_REVIEW
     next_phase: REQUIREMENTS
     owner: kacho
-    required_documents: [00_proposal]
+    required_documents: [proposal]
     approvers: [kacho, bucho, shacho]
     client_review:                # 提案審査の前提: 客先レビュー
       reviews: 提案内容・プロジェクト計画方針
-      documents: [00_proposal]
+      documents: [proposal]
       facilitator: kacho
-      record_document: 16_client_review
+      record_document: client_review
       outcomes: [APPROVED, REVISION_REQUESTED]
   project_plan:                   # PJ計画審査
     previous_phase: REQUIREMENTS
     review_phase: PROJECT_PLAN_REVIEW
     next_phase: BASIC_DESIGN
     owner: kacho
-    required_documents: [01_project_plan, 02_requirements, 06_risk_register]
+    required_documents: [project_plan, requirements, risk_register]
     approvers: [kacho, bucho, shunin]
     client_review:                # PJ計画審査の前提: 客先レビュー
       reviews: 要件定義書
-      documents: [02_requirements]
+      documents: [requirements]
       facilitator: kacho
-      record_document: 16_client_review
+      record_document: client_review
       outcomes: [APPROVED, REVISION_REQUESTED]
   basic_design:                   # 基本設計審査
     previous_phase: BASIC_DESIGN
     review_phase: BASIC_DESIGN_REVIEW
     next_phase: DETAILED_DESIGN
     owner: kacho
-    required_documents: [03_basic_design, 07_issue_log]
+    required_documents: [basic_design, issue_log]
     approvers: [kacho, bucho]
     client_review:                # 基本設計審査の前提: 客先レビュー
       reviews: 基本設計書
-      documents: [03_basic_design]
+      documents: [basic_design]
       facilitator: kacho
-      record_document: 16_client_review
+      record_document: client_review
       outcomes: [APPROVED, REVISION_REQUESTED]
   detailed_design:                # 詳細設計審査
     previous_phase: DETAILED_DESIGN
     review_phase: DETAILED_DESIGN_REVIEW
     next_phase: IMPLEMENTATION
     owner: shunin
-    required_documents: [04_detailed_design, 05_wbs, 09_test_plan]
+    required_documents: [detailed_design, wbs, test_plan]
     approvers: [kacho, shunin, bucho]
     client_review:                # 詳細設計審査の前提: 客先レビュー
       reviews: 詳細設計書
-      documents: [04_detailed_design]
+      documents: [detailed_design]
       facilitator: kacho
-      record_document: 16_client_review
+      record_document: client_review
       outcomes: [APPROVED, REVISION_REQUESTED]
   release:                        # リリース判定会
     previous_phase: INTEGRATION_TEST
     review_phase: RELEASE_REVIEW
     next_phase: RELEASED
     owner: kacho
-    required_documents: [10_test_report, 11_deliverables_list]
+    required_documents: [test_report, deliverables_list]
     approvers: [kacho, shunin, bucho, shacho]
   completion:                     # PJ完了審査
     previous_phase: RELEASED
     review_phase: COMPLETION_REVIEW
     next_phase: COMPLETED
     owner: kacho
-    required_documents: [12_lessons_learned, 13_completion_approval]
+    required_documents: [lessons_learned, completion_approval]
     approvers: [kacho, bucho, shacho]
     extra_requirements:
       lessons_min_approved: 3
@@ -204,7 +204,7 @@ incident:
   status_reporter: [bucho, kacho]
   apology_by: [bucho, kacho]      # 重篤時は部長+課長で謝罪
   rca_method: naze_naze
-  closing_document: 14_incident_report
+  closing_document: incident_report
 
 deliverables_minimum:
   - source_code

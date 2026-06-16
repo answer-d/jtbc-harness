@@ -24,12 +24,12 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 
 - **Agents (6)** — `agents/jtbc-{shacho,bucho,kacho,shunin,tantou,ses}.md`
   (外注SES `jtbc-ses` は `model: haiku` の低コスト実装支援)
-- **Commands (13)** — `commands/jtbc-{init,status,gate,client-review,phase,ringi,shonin,noubi,kyokun,role,mode,meeting,incident}.md`
+- **Commands (13)** — `commands/{init,status,gate,client-review,phase,ringi,shonin,noubi,kyokun,role,mode,meeting,incident}.md`
 - **Skills (6)** — `jtbc-governance`(司令塔) / `jtbc-document-writer` / `jtbc-customer-relations`(接遇) /
   `jtbc-meetings`(会議体) / `jtbc-incident-response`(インシデント) / `jtbc-naze-naze`(なぜなぜ分析)
 - **Hooks (5)** — `hooks/{phase,role,ringi,incident}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制) +
   `hooks/superior_visit.py`(UserPromptSubmit で上長視察を確率注入)
-- **Templates (17)** — `templates/00_proposal.md` 〜 `13_*`, `14_incident_report.md`, `15_meeting_minutes.md`, `16_client_review.md`
+- **Templates (17)** — `templates/proposal.md` 〜 `completion_approval.md`, `incident_report.md`, `meeting_minutes.md`, `client_review.md`
 - **Modes (1)** — `modes/jtbc.yaml`(JTBC専用。startupモードは廃止)
 
 ## state.json schema

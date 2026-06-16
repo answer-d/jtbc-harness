@@ -28,7 +28,7 @@ IMPLEMENTER_ROLES = {"jtbc-tantou", "jtbc-ses", "jtbc-shunin"}
 
 ROLE_RULES: dict[str, dict[str, list[str]]] = {
     "jtbc-shacho": {
-        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/lessons/", r"^\.jtbc/gates/", r"^\.jtbc/deliverables/13_", r"^\.jtbc/incidents/.*report.*"],
+        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/lessons/", r"^\.jtbc/gates/", r"^\.jtbc/deliverables/completion_approval", r"^\.jtbc/incidents/.*report.*"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/wbs/"],
     },
     "jtbc-bucho": {
@@ -36,22 +36,22 @@ ROLE_RULES: dict[str, dict[str, list[str]]] = {
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/"],
     },
     "jtbc-kacho": {
-        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/03_", r"^\.jtbc/risks/", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
-        "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/designs/04_"],
+        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/risks/", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
+        "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/designs/detailed_design"],
     },
     "jtbc-shunin": {
         # テックリードとして実装も可。コードは active_wbs_task の範囲内かつ実装系フェーズのみ
         # (phase_guard / WBSチェックで制御)。
-        "allow": [r"^\.jtbc/designs/04_", r"^\.jtbc/wbs/", r"^\.jtbc/tests/09_", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^src/", r"^lib/", r"^app/", r"^tests/"],
-        "deny": [r"^pkg/", r"^internal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/03_", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/"],
+        "allow": [r"^\.jtbc/designs/detailed_design", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_plan", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^src/", r"^lib/", r"^app/", r"^tests/"],
+        "deny": [r"^pkg/", r"^internal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/"],
     },
     "jtbc-tantou": {
-        "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/05_", r"^\.jtbc/tests/10_", r"^\.jtbc/changes/pending/", r"^\.jtbc/issues/", r"^\.jtbc/minutes/"],
+        "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/changes/pending/", r"^\.jtbc/issues/", r"^\.jtbc/minutes/"],
         "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/"],
     },
     "jtbc-ses": {
         # 外注SES: 担当と同等のコード権限。ただしガバナンス文書は稟議/課題起票以外触れない。
-        "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/05_", r"^\.jtbc/tests/10_", r"^\.jtbc/issues/"],
+        "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/issues/"],
         "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/gates/", r"^\.jtbc/changes/", r"^\.jtbc/minutes/", r"^\.jtbc/incidents/"],
     },
 }

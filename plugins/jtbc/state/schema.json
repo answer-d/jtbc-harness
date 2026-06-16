@@ -125,7 +125,7 @@
             "reviewed_at": {"type": ["string", "null"], "format": "date"},
             "record": {
               "type": ["string", "null"],
-              "description": "客先レビュー記録(16)のパス"
+              "description": "客先レビュー記録のパス"
             },
             "feedback": {
               "type": "array",

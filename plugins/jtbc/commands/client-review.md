@@ -18,10 +18,10 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 
 | gate | 客先レビュー対象 | ご提示資料 | 直前フェーズ |
 |---|---|---|---|
-| `proposal` | 提案内容・プロジェクト計画方針 | 00 提案書 | PROPOSAL |
-| `project_plan` | 要件定義書 | 02 要件定義書 | REQUIREMENTS |
-| `basic_design` | 基本設計書 | 03 基本設計書 | BASIC_DESIGN |
-| `detailed_design` | 詳細設計書 | 04 詳細設計書 | DETAILED_DESIGN |
+| `proposal` | 提案内容・プロジェクト計画方針 | 提案書 | PROPOSAL |
+| `project_plan` | 要件定義書 | 要件定義書 | REQUIREMENTS |
+| `basic_design` | 基本設計書 | 基本設計書 | BASIC_DESIGN |
+| `detailed_design` | 詳細設計書 | 詳細設計書 | DETAILED_DESIGN |
 
 > `release` / `completion` には客先レビュー前提はありません(客先向け会議・検収で別途対応)。
 
@@ -41,7 +41,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 5. **ここで必ずお客様(ユーザー)の確認を取る。応答を待つ(安請け合い・自己完結で先に進めない)。**
 
 ### 3. 結果の記録
-6. 客先レビュー記録(16)を `.jtbc/client_reviews/<gate>_client_review.md` に作成
+6. 客先レビュー記録を `.jtbc/client_reviews/<gate>_client_review.md` に作成
    - ご説明の要点 / ご指摘事項 / ご承認結果 / 次のステップ を敬語で記す
 7. `state.json#client_reviews[<gate>]` を更新:
 
@@ -60,6 +60,9 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 
 8. 結果による分岐:
    - **ご承認(APPROVED)** → `status: "APPROVED"`。次に `/jtbc:gate <gate>` で社内審査会を開催できる旨をご案内
+     - **特に `proposal` のご承認は、お客様がご提案をお受け入れくださった = ご発注の確定(受注)** を意味する。
+       このタイミングで初めて **受注の御礼** を `jtbc-customer-relations` トーンで申し上げる(下記「提案ご承認」出力例)。
+       (`/jtbc:init` では御礼を述べない ―― 御礼が早すぎないよう、受注の確定はここで行う。)
    - **ご指摘あり・要修正(REVISION_REQUESTED)** → `status: "REVISION_REQUESTED"`、`feedback` にご指摘を記録。
      担当部署(課長/主任)が成果物を修正し、再度 `/jtbc:client-review <gate>` を実施する
 
@@ -72,7 +75,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 🤝 要件定義書 客先レビュー  (担当: 課長)
 
 {{client_name}} 御中
-お世話になっております。JTBC開発部の課長でございます。
+お世話になっております。JTBC開発部でございます。
 このたびは要件定義書がまとまりましたので、社内審査に先立ち、内容のご確認をお願い申し上げます。
 
 【ご説明の要点】
@@ -95,6 +98,23 @@ state: client_reviews.project_plan = APPROVED
 つきましては、社内のPJ計画審査(/jtbc:gate project_plan)へと進めさせていただきます。
 ```
 
+## 出力例 (提案ご承認 = 受注の御礼)  ※ `proposal` のご承認時のみ
+
+```
+{{client_name}} 御中
+
+このたびはご提案の内容をご承認賜り、誠にありがとうございます。
+数ある開発会社の中から弊社をお選びいただきましたことを、心より御礼申し上げます。
+ご提示の条件にて、本プロジェクトを進めさせていただきます。
+
+つきましては、次のステップとして要件定義へと進めてまいります。
+今後ともどうぞよろしくお願い申し上げます。
+
+客先レビュー記録: .jtbc/client_reviews/proposal_client_review.md
+state: client_reviews.proposal = APPROVED
+→ 社内の提案審査(/jtbc:gate proposal)を経て、要件定義フェーズへ進みます。
+```
+
 ## 出力例 (ご指摘をいただいた場合)
 
 ```
@@ -103,5 +123,5 @@ state: client_reviews.project_plan = APPROVED
 改めてご確認をお願い申し上げます。今しばらくお時間を頂戴いたします。
 
 state: client_reviews.project_plan = REVISION_REQUESTED
-→ 課長が要件定義書(02)を修正し、再度 /jtbc:client-review project_plan を実施します。
+→ 課長が要件定義書を修正し、再度 /jtbc:client-review project_plan を実施します。
 ```

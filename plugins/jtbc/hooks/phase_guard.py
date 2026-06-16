@@ -7,7 +7,7 @@ phase_guard.py — JTBC PreToolUse hook
 ルール:
 - phase が実装系 (IMPLEMENTATION / UNIT_TEST / INTEGRATION_TEST) でない限り、
   src/ / lib/ / app/ / pkg/ / internal/ への書込みは原則ブロック。
-- 設計成果物 (.jtbc/designs/03_*, 04_*, .jtbc/wbs/) は対応フェーズ外では原則編集しない
+- 設計成果物 (.jtbc/designs/basic_design.md, detailed_design.md, .jtbc/wbs/) は対応フェーズ外では原則編集しない
   (役職判定は role_guard.py が担当。本フックは「工程到達」の観点でガードする)。
 
 入力: stdin に Claude Code が JSON で {"tool_name":..., "tool_input":{...}, "cwd":...}

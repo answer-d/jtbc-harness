@@ -16,7 +16,7 @@ argument-hint: "<open <severity> \"事象\" | status <INC> | report <INC> | reso
 
 - `severity`: `low` | `medium` | `high` | `critical`
 - 動作:
-  1. `INC-NNN` を採番、`14_incident_report` を `.jtbc/incidents/INC-NNN.md` に生成
+  1. `INC-NNN` を採番、`incident_report` を `.jtbc/incidents/INC-NNN.md` に生成
   2. `state.json#active_incidents` に `INC-NNN` を追加(= 緊急対応モード突入)
   3. 原因に関係する通常作業を停止
   4. お客様へ第一報(`jtbc-customer-relations` のお詫びトーン、severity に応じ課長 or 部長名義):
@@ -36,7 +36,7 @@ argument-hint: "<open <severity> \"事象\" | status <INC> | report <INC> | reso
 
 ### `report <INC-NNN>`
 
-**なぜなぜ分析**(`jtbc-naze-naze`)で真因を究明し、障害報告書(14)の第5〜7章を完成させる。
+**なぜなぜ分析**(`jtbc-naze-naze`)で真因を究明し、障害報告書の第5〜7章を完成させる。
 再発防止策は 仕組み > 手順 > 教育 の順で立てる。重篤時は部長+課長連名のお詫びを添える。
 
 ### `resolve <INC-NNN>`
@@ -49,7 +49,7 @@ argument-hint: "<open <severity> \"事象\" | status <INC> | report <INC> | reso
 
 - 動作:
   1. 報告書の status を CLOSED に
-  2. 教訓登録簿(12)へ `L-NNN` を登録(`/jtbc:kyokun add` 連携)
+  2. 教訓登録簿へ `L-NNN` を登録(`/jtbc:kyokun add` 連携)
   3. `state.json#active_incidents` から `INC-NNN` を除外(緊急対応モード解除)
   4. お客様へ最終ご報告(顛末+再発防止策)を提出
 

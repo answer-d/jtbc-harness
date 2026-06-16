@@ -14,20 +14,20 @@ JTBCモードの場合、最低限以下を納品物とする:
 | # | 納品物 | 種別 | 提出パス | 状態 |
 |---|---|---|---|---|
 | 1 | ソースコード | source | `src/` (+ tag `v1.0.0`) | NOT_READY |
-| 2 | 提案書 | doc | `.jtbc/proposal/00_proposal.md` | NOT_READY |
-| 3 | プロジェクト計画書 | doc | `.jtbc/plans/01_project_plan.md` | NOT_READY |
-| 4 | 要件定義書 | doc | `.jtbc/requirements/02_requirements.md` | NOT_READY |
-| 5 | 基本設計書 | doc | `.jtbc/designs/03_basic_design.md` | NOT_READY |
-| 6 | 詳細設計書 | doc | `.jtbc/designs/04_detailed_design.md` | NOT_READY |
-| 7 | WBS | doc | `.jtbc/wbs/05_wbs.md` | NOT_READY |
-| 8 | リスク登録簿 | doc | `.jtbc/risks/06_risk_register.md` | NOT_READY |
-| 9 | 課題管理簿 | doc | `.jtbc/issues/07_issue_log.md` | NOT_READY |
+| 2 | 提案書 | doc | `.jtbc/proposal/proposal.md` | NOT_READY |
+| 3 | プロジェクト計画書 | doc | `.jtbc/plans/project_plan.md` | NOT_READY |
+| 4 | 要件定義書 | doc | `.jtbc/requirements/requirements.md` | NOT_READY |
+| 5 | 基本設計書 | doc | `.jtbc/designs/basic_design.md` | NOT_READY |
+| 6 | 詳細設計書 | doc | `.jtbc/designs/detailed_design.md` | NOT_READY |
+| 7 | WBS | doc | `.jtbc/wbs/wbs.md` | NOT_READY |
+| 8 | リスク登録簿 | doc | `.jtbc/risks/risk_register.md` | NOT_READY |
+| 9 | 課題管理簿 | doc | `.jtbc/issues/issue_log.md` | NOT_READY |
 | 10 | 変更管理票一式 | doc | `.jtbc/changes/approved/CR-*.md` | NOT_READY |
-| 11 | テスト計画書 | doc | `.jtbc/tests/09_test_plan.md` | NOT_READY |
-| 12 | テスト結果報告書 | report | `.jtbc/tests/10_test_report.md` | NOT_READY |
+| 11 | テスト計画書 | doc | `.jtbc/tests/test_plan.md` | NOT_READY |
+| 12 | テスト結果報告書 | report | `.jtbc/tests/test_report.md` | NOT_READY |
 | 13 | リリース記録 | record | `.jtbc/deliverables/release_note.md` | NOT_READY |
-| 14 | 教訓登録簿 | doc | `.jtbc/lessons/12_lessons_learned.md` | NOT_READY |
-| 15 | プロジェクト完了承認書 | doc | `.jtbc/deliverables/13_completion_approval.md` | NOT_READY |
+| 14 | 教訓登録簿 | doc | `.jtbc/lessons/lessons_learned.md` | NOT_READY |
+| 15 | プロジェクト完了承認書 | doc | `.jtbc/deliverables/completion_approval.md` | NOT_READY |
 
 ## 2. 状態区分
 

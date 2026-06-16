@@ -45,7 +45,7 @@ argument-hint: "<shacho|bucho|kacho|shunin|tantou|ses>"
 現フェーズ: 要件定義 (REQUIREMENTS) / このフェーズでの課長: ◎ 主担当
 
 課長のご担当領域:
-- 要件定義書(02)・計画書(01)の起案
+- 要件定義書・計画書の起案
 - 設計レビュー、稟議の課長段、お客様窓口
 
 ご要望をお聞かせください。(他役職へは /jtbc:role を再度実行)

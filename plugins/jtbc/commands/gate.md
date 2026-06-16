@@ -22,12 +22,12 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design|release|comp
 
 | gate | 前フェーズ | 次フェーズ | 必要書類 | 承認者(◎owner先頭) | 客先レビュー前提 |
 |---|---|---|---|---|---|
-| proposal | PROPOSAL | REQUIREMENTS | 00 提案書 | 課長, 部長, 社長 | 要(提案内容・PJ計画) |
-| project_plan | REQUIREMENTS | BASIC_DESIGN | 01 計画, 02 要件, 06 リスク | 課長, 部長, 主任 | 要(要件定義書) |
-| basic_design | BASIC_DESIGN | DETAILED_DESIGN | 03 基本設計, 07 課題 | 課長, 部長 | 要(基本設計書) |
-| detailed_design | DETAILED_DESIGN | IMPLEMENTATION | 04 詳細設計, 05 WBS, 09 テスト計画 | 課長, 主任, 部長 | 要(詳細設計書) |
-| release | INTEGRATION_TEST | RELEASED | 10 テスト結果, 11 納品一覧 | 課長, 主任, 部長, 社長 | — |
-| completion | RELEASED | COMPLETED | 12 教訓, 13 完了承認書 | 課長, 部長, 社長 | — |
+| proposal | PROPOSAL | REQUIREMENTS | 提案書 | 課長, 部長, 社長 | 要(提案内容・PJ計画) |
+| project_plan | REQUIREMENTS | BASIC_DESIGN | 計画, 要件, リスク | 課長, 部長, 主任 | 要(要件定義書) |
+| basic_design | BASIC_DESIGN | DETAILED_DESIGN | 基本設計, 課題 | 課長, 部長 | 要(基本設計書) |
+| detailed_design | DETAILED_DESIGN | IMPLEMENTATION | 詳細設計, WBS, テスト計画 | 課長, 主任, 部長 | 要(詳細設計書) |
+| release | INTEGRATION_TEST | RELEASED | テスト結果, 納品一覧 | 課長, 主任, 部長, 社長 | — |
+| completion | RELEASED | COMPLETED | 教訓, 完了承認書 | 課長, 部長, 社長 | — |
 
 > **客先レビュー前提**: 「要」のゲートは、社内審査会の前に `/jtbc:client-review <gate>` で
 > お客様のご承認(`state.json#client_reviews[<gate>].status == "APPROVED"`)を得ておく必要があります。
@@ -100,13 +100,13 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design|release|comp
 
 [根回し] 課長が部長・社長へ事前共有 … 論点合意済み
 必要書類チェック:
-  ✅ 提案書 (.jtbc/proposal/00_proposal.md)
+  ✅ 提案書 (.jtbc/proposal/proposal.md)
 審査チェックリスト: 5/5 OK
 承認:
   🔴 課長 / 🔴 部長 / 🔴 社長
 
 phase: 提案 → 要件定義 に更新しました。
-次のステップ: ご要望を詳しく伺い、課長が要件定義書(02)を起こします。
+次のステップ: ご要望を詳しく伺い、課長が要件定義書を起こします。
 ```
 
 ## 出力 (差し戻し)
@@ -115,7 +115,7 @@ phase: 提案 → 要件定義 に更新しました。
 🎯 PJ計画審査
 
 ❌ スケジュールバッファが 12% (規定 20% 未満) — 部長差し戻し
-→ 計画書(01)のバッファを見直し、再度 /jtbc:gate project_plan を実行してください。
+→ 計画書のバッファを見直し、再度 /jtbc:gate project_plan を実行してください。
 
 差し戻し理由: スケジュールバッファ不足(12%、規定 20% 以上)
 phase: REQUIREMENTS_REVIEW → 要件定義 (REQUIREMENTS) に戻しました。

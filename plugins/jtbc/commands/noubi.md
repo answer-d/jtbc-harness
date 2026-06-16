@@ -11,7 +11,7 @@ argument-hint: "<check | generate>"
 
 ### `generate`
 
-`.jtbc/deliverables/11_deliverables_list.md` を生成/更新します。
+`.jtbc/deliverables/deliverables_list.md` を生成/更新します。
 
 動作:
 1. mode (`state.json#mode`) を読む
@@ -28,7 +28,7 @@ argument-hint: "<check | generate>"
 リリース判定会の前に納品物の準備状況を検証します。
 
 動作:
-1. `11_deliverables_list.md` を Read
+1. `deliverables_list.md` を Read
 2. 各エントリの「提出予定パス」が実在するかチェック
 3. 不足リストを表示
 
@@ -38,11 +38,11 @@ argument-hint: "<check | generate>"
 📦 納品物チェック
 
 ✅ ソースコード      → src/ (存在確認)
-✅ 基本設計書        → .jtbc/designs/03_basic_design.md (APPROVED)
-✅ 詳細設計書        → .jtbc/designs/04_detailed_design.md (APPROVED)
-❌ テスト結果報告書  → .jtbc/tests/10_test_report.md (内容空欄)
+✅ 基本設計書        → .jtbc/designs/basic_design.md (APPROVED)
+✅ 詳細設計書        → .jtbc/designs/detailed_design.md (APPROVED)
+❌ テスト結果報告書  → .jtbc/tests/test_report.md (内容空欄)
 ❌ リリース記録      → .jtbc/deliverables/release_note.md (ファイル無し)
-✅ 教訓登録簿        → .jtbc/lessons/12_lessons_learned.md (DRAFT)
+✅ 教訓登録簿        → .jtbc/lessons/lessons_learned.md (DRAFT)
 
 不足: 2件。リリース判定会(/jtbc:gate release)前に解消してください。
 ```

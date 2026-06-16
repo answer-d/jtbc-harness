@@ -17,7 +17,7 @@ JTBCプロジェクト状況
 
 案件: <project_name> (<project_code>)   お客様: <client_name>
 現フェーズ: <phase の日本語名>
-体制: 社長/部長/課長/主任/担当(<n>) + 外注SES(<m>)
+体制: 課長/主任/担当(<n>)   ※承認・エスカレーション: 部長/社長 / 増員枠: 外注SES(<m>)
 
 進行中の審査: <active_gate or "なし">
 進行中の稟議: <active_ringi 一覧 or "なし">
@@ -44,14 +44,14 @@ JTBCプロジェクト状況
 
 | 現フェーズ | 推奨アクション |
 |---|---|
-| 提案 (PROPOSAL) | 課長がご要望を整理し提案書(00)を起案 → `/jtbc:client-review proposal` → `/jtbc:gate proposal` |
-| 要件定義 (REQUIREMENTS) | 課長が要件定義書(02)・計画書(01) → `/jtbc:client-review project_plan` → `/jtbc:gate project_plan` |
-| 基本設計 (BASIC_DESIGN) | 課長が基本設計(03) → `/jtbc:client-review basic_design` → `/jtbc:gate basic_design` |
-| 詳細設計 (DETAILED_DESIGN) | 主任が詳細設計(04)・WBS(05) → `/jtbc:client-review detailed_design` → `/jtbc:gate detailed_design` |
+| 提案 (PROPOSAL) | 課長がご要望を整理し提案書を起案 → `/jtbc:client-review proposal` → `/jtbc:gate proposal` |
+| 要件定義 (REQUIREMENTS) | 課長が要件定義書・計画書 → `/jtbc:client-review project_plan` → `/jtbc:gate project_plan` |
+| 基本設計 (BASIC_DESIGN) | 課長が基本設計 → `/jtbc:client-review basic_design` → `/jtbc:gate basic_design` |
+| 詳細設計 (DETAILED_DESIGN) | 主任が詳細設計・WBS → `/jtbc:client-review detailed_design` → `/jtbc:gate detailed_design` |
 | 実装 (IMPLEMENTATION) | 主任が担当/SESへ割り振り、実装 → 完了後 `/jtbc:phase next` |
 | 単体テスト (UNIT_TEST) | 担当が単体テスト → `/jtbc:phase next` |
 | 総合テスト (INTEGRATION_TEST) | 主任が総合テスト → `/jtbc:gate release` |
-| リリース済 (RELEASED) | 教訓(12)整理 → `/jtbc:gate completion` |
+| リリース済 (RELEASED) | 教訓整理 → `/jtbc:gate completion` |
 | *_REVIEW | 審査会開催中。承認者の押印を待つ |
 
 ## インシデント発生中の表示

@@ -21,7 +21,7 @@ status: PENDING | APPROVED | REVISION_REQUESTED
 
 - レビュー名: <対象>客先レビュー
 - 対象ゲート: <proposal | project_plan | basic_design | detailed_design>
-- ご提示資料: <00 提案書 / 02 要件定義書 / 03 基本設計書 / 04 詳細設計書 等>
+- ご提示資料: <提案書 / 要件定義書 / 基本設計書 / 詳細設計書 等>
 - 日時: 
 - 弊社出席者: 課長(窓口)〔重要局面では部長も同席〕
 - お客様: {{client_name}} 御中

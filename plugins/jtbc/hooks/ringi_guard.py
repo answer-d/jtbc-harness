@@ -5,7 +5,7 @@ ringi_guard.py — JTBC PreToolUse hook
 要件/設計に "稟議無しで直接手を入れる" 行為をブロックする。
 
 ルール:
-- .jtbc/requirements/02_requirements.md, .jtbc/designs/03_*.md, .jtbc/designs/04_*.md
+- .jtbc/requirements/requirements.md, .jtbc/designs/basic_design*.md, .jtbc/designs/detailed_design*.md
   への Edit/Write/MultiEdit は、承認済みの変更管理票(稟議)に対象が含まれる場合のみ許可。
 - 各ドキュメントの初版作成フェーズ中に、その主担当 role が書く場合は例外的に許可
   (初版執筆は稟議対象外。改訂のみ稟議が要る)。
@@ -19,9 +19,9 @@ from pathlib import Path
 
 # cr_type: (path_pattern, 初版作成フェーズ, 初版作成を許す役職)
 DOC_PATTERNS = {
-    "requirement": (r"^\.jtbc/requirements/02_", "REQUIREMENTS", {"jtbc-kacho"}),
-    "design_basic": (r"^\.jtbc/designs/03_", "BASIC_DESIGN", {"jtbc-kacho"}),
-    "design_detailed": (r"^\.jtbc/designs/04_", "DETAILED_DESIGN", {"jtbc-shunin"}),
+    "requirement": (r"^\.jtbc/requirements/", "REQUIREMENTS", {"jtbc-kacho"}),
+    "design_basic": (r"^\.jtbc/designs/basic_design", "BASIC_DESIGN", {"jtbc-kacho"}),
+    "design_detailed": (r"^\.jtbc/designs/detailed_design", "DETAILED_DESIGN", {"jtbc-shunin"}),
 }
 
 

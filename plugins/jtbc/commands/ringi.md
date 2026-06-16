@@ -18,7 +18,7 @@ argument-hint: "<new <type> <title> | submit <CR-NNN> | list | show <CR-NNN>>"
 
 動作:
 1. 次の連番を決定 (`.jtbc/changes/{pending,approved,rejected}/CR-NNN.md` をスキャン)
-2. `plugins/jtbc/templates/08_change_request.md` を読み、雛形を埋める:
+2. `plugins/jtbc/templates/change_request.md` を読み、雛形を埋める:
    - CR-ID
    - type
    - title
