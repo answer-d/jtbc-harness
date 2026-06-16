@@ -54,7 +54,7 @@
 ### A. Marketplace 経由(将来の公式配布想定)
 
 ```bash
-/plugin marketplace add answer-d/jtbc-herness
+/plugin marketplace add answer-d/jtbc-harness
 /plugin install jtbc@jtbc-marketplace
 ```
 
@@ -81,7 +81,7 @@ cd /path/to/your/project
 ## 構成
 
 ```
-jtbc-herness/
+jtbc-harness/
 ├── .claude-plugin/marketplace.json   ← Marketplace 配布定義
 └── plugins/jtbc/
     ├── .claude-plugin/plugin.json

@@ -146,7 +146,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 ## 3. ディレクトリ構成
 
 ```
-jtbc-herness/                           ← プラグイン開発リポジトリ (= マーケットプレイス)
+jtbc-harness/                           ← プラグイン開発リポジトリ (= マーケットプレイス)
 ├── README.md
 ├── DESIGN.md                            ← このファイル
 ├── .claude-plugin/
@@ -478,7 +478,7 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 
 ```bash
 # ユーザー側の利用イメージ
-/plugin marketplace add answer-d/jtbc-herness
+/plugin marketplace add answer-d/jtbc-harness
 /plugin install jtbc@jtbc-marketplace
 ```
 
