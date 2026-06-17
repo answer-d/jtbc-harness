@@ -86,8 +86,8 @@ def main() -> int:
     if match_any(rules["deny"], relative):
         print(
             f"[role_guard] BLOCKED: 役職 '{agent_name}' は '{relative}' への書込みが禁止されています。\n"
-            f"必要であれば別 role に切替えてください: /jtbc:role <role>。\n"
-            f"要件/設計変更が必要な場合は、司令塔が変更管理(稟議)を社内で自動処理します(governance スキル)。",
+            f"役職の振り分けは司令塔が自動で行います(governance スキル)。\n"
+            f"要件/設計変更が必要な場合は、司令塔が変更管理(稟議)を社内で自動処理します。",
             file=sys.stderr,
         )
         return 2

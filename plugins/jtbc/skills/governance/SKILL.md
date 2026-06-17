@@ -43,10 +43,14 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
       - phase ∈ {IMPLEMENTATION, UNIT_TEST, INTEGRATION_TEST} なら active_wbs_task を確認 → 主任が担当/SESへ割り振り
       - それ以外                          → 詳細設計の内部審査・お客様のご承認が未了の旨を伝える
                                             (実装へ進むには設計工程の自動審査・客先承認の完了が必要)
-   e. 進捗確認・報告依頼                  → /jtbc:status、必要なら客先定例(/jtbc:meeting)
-   f. 不具合・事故・違反の申告            → incident-response を起動(/jtbc:incident)
+   e. 進捗確認・報告依頼                  → /jtbc:status。必要なら司令塔が客先定例を自動で開催(meetings スキル)
+   f. 不具合・事故・違反の申告            → 司令塔が incident-response を自動起動(緊急一報→なぜなぜ→障害報告書→収束)
    g. 上記いずれでもない                  → お客様に状況を丁重に確認する
 ```
+
+> **社内作業はお客様に操作させない。** 工程進行・会議体・インシデント対応・役職の振り分け・
+> 納品物の整備・教訓登録は **すべて司令塔(governance)が自動実行** する(専用の slash コマンドは持たない)。
+> お客様の役割は「依頼する/答える/承認する/進捗を尋ねる」だけ。社内処理の経過は簡潔にご報告してよい。
 
 ## 内部審査の自動開催 (最重要・UXの根幹)
 
@@ -86,8 +90,8 @@ PROPOSAL / REQUIREMENTS / BASIC_DESIGN / DETAILED_DESIGN では、担当(課長/
 ### dispatch 前の roster 確認 (C-2)
 
 外注SES(ses)や2人目以降の担当 agent を起動する前に、`state.json#roster` を確認すること。
-roster の人数上限を超える場合は起動せず、「部長承認による増員が必要」と案内し、
-`/jtbc:role bucho` で部長を起動して増員申請フローへ誘導する。
+roster の人数上限を超える場合は起動せず、司令塔が部長へ自動でエスカレーションして増員申請フロー
+(部長承認による roster 更新)を回す。役職 agent の起動は司令塔が自動で行う(お客様は操作しない)。
 
 ## フェーズと役職 アクティブマトリクス
 
@@ -175,10 +179,15 @@ phase: REQUIREMENTS_REVIEW → 要件定義 (REQUIREMENTS) に戻し、起案を
 active_gate: null
 ```
 
-### ゲートを伴わない工程内遷移 (/jtbc:phase next)
+### ゲートを伴わない工程内遷移 (司令塔が自動で進める)
 
-`実装 → 単体テスト → 総合テスト` は審査会を挟まない。主任が当該工程の完了を確認し、
-内部定例で合意のうえ `/jtbc:phase next` で進める(`modes/jtbc.yaml#linear_transitions`)。
+`実装 → 単体テスト → 総合テスト` は審査会を挟まない。**主任が当該工程の完了条件を確認したら、
+司令塔が自動で次工程へ遷移** する(`modes/jtbc.yaml#linear_transitions`)。お客様の操作は不要。
+
+- 実装 → 単体テスト: WBS の実装タスクが全て DONE、ビルドが通る
+- 単体テスト → 総合テスト: 単体テストが全 PASS(or 残課題化)、カバレッジ目標達成
+
+完了条件を満たさなければ遷移せず、未達点を内部で是正する。総合テスト完了後は **リリース判定会を自動開催** する。
 
 ## 伝統的施策: 客先レビュー (お客様確認 / 内部承認後に自動発火)
 
@@ -262,10 +271,14 @@ ringi_workflow:
 6. **ご報告**: 結果(承認/却下、影響範囲、次のステップ)をお客様へ分かる言葉でご報告する。
    稟議の往復(社内の役職名・押印過程)は **簡潔な経過** として示してよい(様式美の演出)。
 
-## 会議体・インシデント
+## 会議体・インシデント・納品・教訓 (いずれも司令塔が自動実行)
 
-- 会議体(定例/客先/役員/上長視察)は `meetings` スキル + `/jtbc:meeting` に委譲
-- インシデント(ルール違反/事故)は `incident-response` スキル + `/jtbc:incident` に委譲
+- 会議体(定例/客先/役員/上長視察)は司令塔が適切なタイミングで自動開催し `meetings` スキルに委譲
+- インシデント(ルール違反/事故)はお客様の申告または検知を起点に司令塔が `incident-response` スキルを自動起動
+- **納品物**: リリース判定会・PJ完了審査(自動開催)の前提として、司令塔/担当が納品一覧
+  (`.jtbc/deliverables/deliverables_list.md`)を自動で生成・検証する(`modes/jtbc.yaml#deliverables_minimum` 準拠)
+- **教訓**: PJ完了審査の前提(3件以上 APPROVED)として、なぜなぜ分析由来の教訓を
+  `.jtbc/lessons/lessons_learned.md`(`L-NNN`)へ自動登録する。インシデント収束時にも教訓を登録する
 - 根本原因分析は `naze-naze` スキルを用いる
 - **緊急対応モードの物理強制(B-3)**: `incident_guard.py`(PreToolUse hook)が `active_incidents` 非空の間は `.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理的にブロックする。src・tests・incidents・issues 等は引き続き許可
 - **上長視察の確率発火(C-1)**: `superior_visit.py`(UserPromptSubmit hook)が各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率的に発火し、文脈に注入する。COMPLETED フェーズや緊急対応中は発火しない。視察は「ランダムイベント」として実体を持つ
