@@ -2,7 +2,7 @@
 cr_id: CR-NNN
 type: requirement | design | tech_stack | scope | effort
 title: 
-status: DRAFT | PENDING_SHUNIN | PENDING_KACHO | PENDING_BUCHO | PENDING_SHACHO | APPROVED | REJECTED
+status: DRAFT | PENDING_KACHO | PENDING_BUCHO | PENDING_SHACHO | APPROVED | REJECTED
 created_by: 
 created_at: 
 approvals: []
@@ -76,23 +76,23 @@ approvals: []
 
 ## 8. 承認パス
 
-<!-- type ごとの承認経路 (ringi_workflow より):
-  - requirement : 主任 → 課長 → 部長 → 社長
-  - design      : 主任 → 課長 → 部長
-  - tech_stack  : 主任 → 課長 → 部長
-  - scope       : 課長 → 部長 → 社長
-  - effort      : 主任 → 課長 → 部長
+<!-- type ごとの承認経路 (ringi_workflow より / 起案者は承認者に含めない):
+  - requirement : 課長 → 部長 → 社長   (起案者: 主任)
+  - design      : 課長 → 部長          (起案者: 主任)
+  - tech_stack  : 課長 → 部長          (起案者: 主任)
+  - scope       : 部長 → 社長          (起案者: 課長)
+  - effort      : 課長 → 部長          (起案者: 主任)
 
   本 CR の frontmatter の type に該当する経路の行のみを使うこと。
-  その type で不要な承認段は「N/A」と記入する。
+  その type で不要な承認段(および起案者の段)は「N/A」と記入する。
+  起案者(created_by)は自分の起票を承認しない(自己レビュー禁止)。
 -->
 
 | 段 | 役職 | 状態 | 承認者 | 日時 | コメント |
 |---|---|---|---|---|---|
-| 1 | 主任 (jtbc-shunin) | PENDING / N/A | - | - | - |
-| 2 | 課長 (jtbc-kacho) | WAIT / N/A | - | - | - |
-| 3 | 部長 (jtbc-bucho) | WAIT / N/A | - | - | - |
-| 4 | 社長 (jtbc-shacho) | WAIT / N/A | - | - | - |
+| 1 | 課長 (jtbc-kacho) | PENDING / N/A | - | - | - |
+| 2 | 部長 (jtbc-bucho) | WAIT / N/A | - | - | - |
+| 3 | 社長 (jtbc-shacho) | WAIT / N/A | - | - | - |
 
 <!-- status が APPROVED になると ringi_guard によるドキュメント改訂ロックが解除される。 -->
 
@@ -108,8 +108,8 @@ approvals: []
 ## 文書管理情報
 - 文書ID: CR-NNN
 - バージョン: 0.1
-- 作成者: <role>
-- 承認者: <type に応じた承認経路 (requirement:主任→課長→部長→社長 / design・tech_stack・effort:主任→課長→部長 / scope:課長→部長→社長)>
+- 起案者(created_by): <role> ※起案者は承認しない
+- 承認者: <type に応じた承認経路 (requirement:課長→部長→社長 / design・tech_stack・effort:課長→部長 / scope:部長→社長)>
 - 作成日: {{created_at}}
 - 最終更新: {{created_at}}
 - 承認状態: DRAFT

@@ -5,10 +5,13 @@ ringi_guard.py — JTBC PreToolUse hook
 要件/設計に "稟議無しで直接手を入れる" 行為をブロックする。
 
 ルール:
-- .jtbc/requirements/requirements.md, .jtbc/designs/basic_design*.md, .jtbc/designs/detailed_design*.md
+- .jtbc/proposal/proposal.md, .jtbc/requirements/requirements.md,
+  .jtbc/designs/basic_design*.md, .jtbc/designs/detailed_design*.md
   への Edit/Write/MultiEdit は、承認済みの変更管理票(稟議)に対象が含まれる場合のみ許可。
-- 各ドキュメントの初版作成フェーズ中に、その主担当 role が書く場合は例外的に許可
+- 各ドキュメントの初版作成フェーズ中に、その起案者 role(サブエージェント)が書く場合は例外的に許可
   (初版執筆は稟議対象外。改訂のみ稟議が要る)。
+- 司令塔(メインセッション)は agent_type を持たないため、これらガバナンス文書を直接書けない。
+  必ず起案者の役職サブエージェントを起動して書かせる(役割分離の物理担保)。
 """
 from __future__ import annotations
 
@@ -17,8 +20,9 @@ import re
 import sys
 from pathlib import Path
 
-# cr_type: (path_pattern, 初版作成フェーズ, 初版作成を許す役職)
+# cr_type: (path_pattern, 初版作成フェーズ, 初版作成を許す起案者役職)
 DOC_PATTERNS = {
+    "proposal": (r"^\.jtbc/proposal/", "PROPOSAL", {"jtbc-kacho"}),
     "requirement": (r"^\.jtbc/requirements/", "REQUIREMENTS", {"jtbc-kacho"}),
     "design_basic": (r"^\.jtbc/designs/basic_design", "BASIC_DESIGN", {"jtbc-kacho"}),
     "design_detailed": (r"^\.jtbc/designs/detailed_design", "DETAILED_DESIGN", {"jtbc-shunin"}),
@@ -36,7 +40,13 @@ def main() -> int:
 
     tool_input = payload.get("tool_input", {})
     file_path = tool_input.get("file_path") or tool_input.get("path")
-    agent_name = payload.get("agent_name") or payload.get("subagent_name")
+    # Claude Code は subagent 実行時、frontmatter の name を payload.agent_type に渡す
+    # (例: "jtbc-kacho")。旧 agent_name/subagent_name は存在しないため後方互換で残す。
+    agent_name = (
+        payload.get("agent_type")
+        or payload.get("agent_name")
+        or payload.get("subagent_name")
+    )
     cwd = Path(payload.get("cwd", "."))
     if not file_path:
         return 0
