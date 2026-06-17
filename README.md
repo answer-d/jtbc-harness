@@ -88,6 +88,9 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 
 - **端末要件**: 既定の in-process モードはどの端末でも動作。各役職を別ペインで見たい場合のみ
   tmux または iTerm2 が必要(`teammateMode` 設定 / `claude --teammate-mode`)。
+- **要望ヒアリングは課長と直接対話**: teams モードでは、ヒアリングを **課長 teammate がお客様と直接** 行う
+  (営業は課長へお繋ぎするだけで中継しない=即レス)。課長と専用ペインで会話できる **split-pane(tmux/iTerm2)を推奨**。
+  in-process でも `Shift+Down` で課長へ切り替えれば会話可能。
 - **既知の制約(research preview)**: `/resume` でチームは復元されない(再開時に司令塔が役職を再 spawn)。
   6役職常駐はトークン消費が大きい(出番が来た役職だけ起こす遅延常駐で緩和)。
 
