@@ -20,33 +20,29 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design|release|comp
 
 ## ゲート定義表
 
-| gate | 前フェーズ | 次フェーズ | 必要書類 | 承認者(◎owner先頭) | 客先レビュー前提 |
+| gate | 前フェーズ | 次フェーズ | 必要書類 | 承認者(◎owner先頭) | 客先提示 |
 |---|---|---|---|---|---|
-| proposal | PROPOSAL | REQUIREMENTS | 提案書 | 課長, 部長, 社長 | 要(提案内容・PJ計画) |
-| project_plan | REQUIREMENTS | BASIC_DESIGN | 計画, 要件, リスク | 課長, 部長, 主任 | 要(要件定義書) |
-| basic_design | BASIC_DESIGN | DETAILED_DESIGN | 基本設計, 課題 | 課長, 部長 | 要(基本設計書) |
-| detailed_design | DETAILED_DESIGN | IMPLEMENTATION | 詳細設計, WBS, テスト計画 | 課長, 主任, 部長 | 要(詳細設計書) |
+| proposal | PROPOSAL | REQUIREMENTS | 提案書 | 課長, 部長, 社長 | 内部承認後に提示 |
+| project_plan | REQUIREMENTS | BASIC_DESIGN | 計画, 要件, リスク | 課長, 部長, 主任 | 内部承認後に提示 |
+| basic_design | BASIC_DESIGN | DETAILED_DESIGN | 基本設計, 課題 | 課長, 部長 | 内部承認後に提示 |
+| detailed_design | DETAILED_DESIGN | IMPLEMENTATION | 詳細設計, WBS, テスト計画 | 課長, 主任, 部長 | 内部承認後に提示 |
 | release | INTEGRATION_TEST | RELEASED | テスト結果, 納品一覧 | 課長, 主任, 部長, 社長 | — |
 | completion | RELEASED | COMPLETED | 教訓, 完了承認書 | 課長, 部長, 社長 | — |
 
-> **客先レビュー前提**: 「要」のゲートは、社内審査会の前に `/jtbc:client-review <gate>` で
-> お客様のご承認(`state.json#client_reviews[<gate>].status == "APPROVED"`)を得ておく必要があります。
+> **承認と客先提示の順序(重要)**: 内部承認(このゲート)を **先に** 行い、上位承認を得てから
+> 成果物をお客様へ提示する。**内部承認前の文書をお客様に出してはならない。**
+> `internal_approval_first: true` のゲート(proposal/project_plan/basic_design/detailed_design)は、
+> このゲートでは **phase を進めず**、承認後に `/jtbc:client-review <gate>` でお客様のご承認を得た
+> 時点で `next_phase` へ進む。`release`/`completion` はお客様提示を伴わず、ゲート承認で直接 phase を進める。
 
 ## 実行手順
-
-### A-0: 客先レビュー前提チェック (proposal/project_plan/basic_design/detailed_design のみ)
-0. `modes/jtbc.yaml#gates[<gate>]` に `client_review` がある場合、
-   **`state.json#client_reviews[<gate>].status == "APPROVED"` を機械的に確認する**
-   - APPROVED でない(未実施/PENDING/REVISION_REQUESTED)場合は **ゲートを開催せず中止**し、
-     「社内審査に先立ち、お客様のご確認(客先レビュー)が必要です」と案内して
-     `/jtbc:client-review <gate>` の実施を促す
-   - `release` / `completion` は `client_review` を持たないため本チェックをスキップ
 
 ### A-1: 前提確認
 1. `.jtbc/state.json#phase` を読み、当該ゲートの `previous_phase` と一致するか確認
    - 違う場合は中止:「現在の工程は <現phase> です。<gate> には <previous_phase> である必要があります」
    - **ゲート記録は `.jtbc/gates/<gate>_gate.md` 単一ファイルで管理する(役職名はファイル名に入れない)**
    - **承認の正本は `state.json#approvals["<gate>_gate"]` の値であり、gate記録 .md は参照用**
+   - これは **社内の内部承認** の手続きである。お客様への提示・連絡はここでは行わない。
 
 ### A-2: 書類チェック・根回し
 2. 必要書類の存在と APPROVED 状態を機械的にチェック(不足は不足リストを出して中止)
@@ -66,13 +62,20 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design|release|comp
 🔴 承認  課長  (jtbc-kacho)  2026-06-14
 ```
 
-7. **phase 遷移の前提条件(機械チェック)**:
+7. **承認の機械チェック**:
    `modes/jtbc.yaml#gates[<gate>].approvers` に列挙された **全承認者** について
    `state.json#approvals["<gate>_gate"][<role>] == "approved"` であることを確認する。
-   **1人でも未承認なら phase 遷移を行わない**。
-8. 全員承認が確認できたら → `state.json#phase` を `next_phase` へ、`active_gate` を `null` に更新
+   **1人でも未承認なら以下の遷移を行わない**。
+8. 全員承認が確認できたら、ゲート種別で分岐する:
+   - **`internal_approval_first: true`(proposal/project_plan/basic_design/detailed_design)**:
+     これは内部承認のみ。**phase は `previous_phase` のまま据え置く**(進めない)。
+     `active_gate` を `null` に更新し、approvals を確定する。
+     → 出力で「社内承認(上位承認)が完了し、**客先提示が可能** になりました」と伝え、
+     `/jtbc:client-review <gate>` でお客様へご提示するよう案内する(**ここでお客様へは連絡しない**)。
+   - **client_review を持たないゲート(release/completion)**:
+     `state.json#phase` を `next_phase` へ、`active_gate` を `null` に更新する。
 9. **1人でも No-Go の場合 → `state.json#phase` を `previous_phase` に戻す(review_phase のまま据え置かない)、
-   `active_gate` を `null` に設定し、差し戻し理由を表示する**
+   `active_gate` を `null` に設定し、**当該ゲートの approvals をクリア**し、差し戻し理由を表示する**
 
 ## チェックリスト雛形
 
@@ -93,20 +96,31 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design|release|comp
 - 🔴 承認  社長  ____________  (____-__-__)
 ```
 
-## 出力 (通過)
+## 出力 (通過: internal_approval_first ゲート)
 
 ```
-🎯 提案審査 を開催します
+🎯 提案審査(社内・内部承認)を開催します
 
 [根回し] 課長が部長・社長へ事前共有 … 論点合意済み
 必要書類チェック:
   ✅ 提案書 (.jtbc/proposal/proposal.md)
 審査チェックリスト: 5/5 OK
-承認:
+承認(上位承認):
   🔴 課長 / 🔴 部長 / 🔴 社長
 
-phase: 提案 → 要件定義 に更新しました。
-次のステップ: ご要望を詳しく伺い、課長が要件定義書を起こします。
+✅ 社内承認が完了しました。提案書の客先提示が可能になりました。
+phase: 提案 (PROPOSAL) のまま(客先のご承認をもって要件定義へ進みます)。
+次のステップ: /jtbc:client-review proposal で、内部承認済みの提案書をお客様へご提示します。
+※ お客様への連絡は client-review で行います(この段階ではまだ連絡しません)。
+```
+
+## 出力 (通過: release/completion ゲート)
+
+```
+🎯 リリース判定会 を開催します
+
+承認: 🔴 課長 / 🔴 主任 / 🔴 部長 / 🔴 社長
+phase: 総合テスト → リリース済 に更新しました。
 ```
 
 ## 出力 (差し戻し)

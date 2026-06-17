@@ -24,30 +24,30 @@ JTBCプロジェクト状況
 進行中のWBSタスク: <active_wbs_task or "なし">
 対応中のインシデント: <active_incidents 一覧 or "なし">
 
-客先レビュー状況(社内審査の前提):
+内部承認(ゲート)状況 ※客先提示の前提:
+  - 提案審査:        [x] 課長 / [x] 部長 / [x] 社長  → 客先提示可
+  - PJ計画審査:      [x] 課長 / [ ] 部長 / [ ] 主任
+  - 基本設計審査:    [ ] ...
+  ...
+
+客先提示(ご査収)状況 ※内部承認の後に実施・ご承認で次フェーズへ:
   - 提案:        <APPROVED / PENDING / REVISION_REQUESTED / 未実施>
   - 要件定義書:  <...>
   - 基本設計書:  <...>
   - 詳細設計書:  <...>
 
-承認状況(ゲート):
-  - 提案審査:        [x] 課長 / [x] 部長 / [x] 社長
-  - PJ計画審査:      [x] 課長 / [ ] 部長 / [ ] 主任
-  - 基本設計審査:    [ ] ...
-  ...
-
 次のアクション:
   → <推奨される次のコマンド>
 ```
 
-3. フェーズに応じた推奨アクション:
+3. フェーズに応じた推奨アクション(**内部承認 → 客先提示** の順):
 
 | 現フェーズ | 推奨アクション |
 |---|---|
-| 提案 (PROPOSAL) | 課長がご要望を整理し提案書を起案 → `/jtbc:client-review proposal` → `/jtbc:gate proposal` |
-| 要件定義 (REQUIREMENTS) | 課長が要件定義書・計画書 → `/jtbc:client-review project_plan` → `/jtbc:gate project_plan` |
-| 基本設計 (BASIC_DESIGN) | 課長が基本設計 → `/jtbc:client-review basic_design` → `/jtbc:gate basic_design` |
-| 詳細設計 (DETAILED_DESIGN) | 主任が詳細設計・WBS → `/jtbc:client-review detailed_design` → `/jtbc:gate detailed_design` |
+| 提案 (PROPOSAL) | `/jtbc:hearing` で要望整理 → 課長が提案書起案 → `/jtbc:gate proposal`(内部承認)→ `/jtbc:client-review proposal`(客先提示) |
+| 要件定義 (REQUIREMENTS) | 課長が要件定義書・計画書 → `/jtbc:gate project_plan`(内部承認)→ `/jtbc:client-review project_plan`(客先提示) |
+| 基本設計 (BASIC_DESIGN) | 課長が基本設計 → `/jtbc:gate basic_design`(内部承認)→ `/jtbc:client-review basic_design`(客先提示) |
+| 詳細設計 (DETAILED_DESIGN) | 主任が詳細設計・WBS → `/jtbc:gate detailed_design`(内部承認)→ `/jtbc:client-review detailed_design`(客先提示) |
 | 実装 (IMPLEMENTATION) | 主任が担当/SESへ割り振り、実装 → 完了後 `/jtbc:phase next` |
 | 単体テスト (UNIT_TEST) | 担当が単体テスト → `/jtbc:phase next` |
 | 総合テスト (INTEGRATION_TEST) | 主任が総合テスト → `/jtbc:gate release` |

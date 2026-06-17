@@ -73,8 +73,8 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 | 要素 | 役割 | 実装 |
 |---|---|---|
 | **Subagents (6)** | 役職ごとの人格・ツール制約 | `agents/*.md` (tools: 指定) |
-| **Slash Commands (13)** | ユーザー操作の入口 | `commands/*.md` |
-| **Skills (6)** | ガバナンス制御・接遇・会議・インシデント・なぜなぜ・雛形挿入 | `skills/*/SKILL.md` |
+| **Slash Commands (14)** | ユーザー操作の入口 | `commands/*.md` |
+| **Skills (7)** | ガバナンス制御・接遇・要望ヒアリング・会議・インシデント・なぜなぜ・雛形挿入 | `skills/*/SKILL.md` |
 | **Hooks (5)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制 / ユーザー入力時の上長視察注入 | `hooks/hooks.json` + `*.py` |
 | **State** | プロジェクト現状 | `.jtbc/state.json` |
 | **Templates (17)** | ドキュメント雛形 | `templates/*.md` |
@@ -114,7 +114,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 {
   "name": "jtbc",
   "displayName": "JTBC — Japanese Traditional Big Company",
-  "version": "0.3.1"
+  "version": "0.4.0"
 }
 ```
 
@@ -125,8 +125,8 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 ### 2.2 Plugin が提供するもの
 
 - **Subagents (6)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES
-- **Slash Commands (13)**: init / status / gate / client-review / phase / ringi / shonin / noubi / kyokun / role / mode / meeting / incident
-- **Skills (6)**: governance(司令塔) / document-writer / customer-relations(接遇) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
+- **Slash Commands (14)**: init / status / gate / client-review / hearing / phase / ringi / shonin / noubi / kyokun / role / mode / meeting / incident
+- **Skills (7)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
 - **Hooks (5)**: PreToolUse 4種 (phase_guard / role_guard / ringi_guard / incident_guard) + UserPromptSubmit 1種 (superior_visit)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
   - `superior_visit`: 各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率発火し文脈へ注入(COMPLETED・緊急対応中は発火しない)
@@ -162,13 +162,15 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── jtbc-tantou.md   (担当)
     │   └── jtbc-ses.md      (外注SES / model: haiku)
     ├── commands/
-    │   ├── init.md    status.md  gate.md   phase.md
-    │   ├── ringi.md   shonin.md  noubi.md  kyokun.md
-    │   └── role.md    mode.md    meeting.md incident.md
+    │   ├── init.md    status.md  gate.md   client-review.md
+    │   ├── hearing.md phase.md   ringi.md  shonin.md
+    │   ├── noubi.md   kyokun.md  role.md   mode.md
+    │   └── meeting.md incident.md
     ├── skills/
     │   ├── governance/SKILL.md
     │   ├── document-writer/SKILL.md
     │   ├── customer-relations/SKILL.md
+    │   ├── requirements-interview/SKILL.md
     │   ├── meetings/SKILL.md
     │   ├── incident-response/SKILL.md
     │   └── naze-naze/SKILL.md
@@ -211,20 +213,20 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
 
 ```
  提案 (PROPOSAL)
-   │ 《客先レビュー》/jtbc:client-review proposal … 課長が提案内容をお客様へ提示・承認取得
-   │ /jtbc:gate proposal      … 課長◎ 部長○ 社長○ (この案件を受けるか/客先承認が前提)
+   │ ① /jtbc:gate proposal          … 課長◎ 部長○ 社長○ (内部承認=上位承認/この案件を受けるか)
+   │ ② 《客先提示》/jtbc:client-review proposal … 内部承認済みの提案書をお客様へ提示・ご承認(=受注)で次へ
    ▼
  要件定義 (REQUIREMENTS)
-   │ 《客先レビュー》/jtbc:client-review project_plan … 課長が要件定義書をお客様へ提示・承認取得
-   │ /jtbc:gate project_plan  … 課長◎ 部長○ 主任○ (要件+計画の妥当性/客先承認が前提)
+   │ ① /jtbc:gate project_plan       … 課長◎ 部長○ 主任○ (内部承認/要件+計画の妥当性)
+   │ ② 《客先提示》/jtbc:client-review project_plan … 内部承認済みの要件定義書をお客様へ提示・ご承認で次へ
    ▼
  基本設計 (BASIC_DESIGN)
-   │ 《客先レビュー》/jtbc:client-review basic_design … 課長が基本設計書をお客様へ提示・承認取得
-   │ /jtbc:gate basic_design  … 課長◎ 部長○ (客先承認が前提)
+   │ ① /jtbc:gate basic_design       … 課長◎ 部長○ (内部承認)
+   │ ② 《客先提示》/jtbc:client-review basic_design … 内部承認済みの基本設計書をお客様へ提示・ご承認で次へ
    ▼
  詳細設計 (DETAILED_DESIGN)
-   │ 《客先レビュー》/jtbc:client-review detailed_design … 課長が詳細設計書をお客様へ提示・承認取得
-   │ /jtbc:gate detailed_design … 課長○ 主任◎ 部長○ (客先承認が前提)
+   │ ① /jtbc:gate detailed_design    … 課長○ 主任◎ 部長○ (内部承認)
+   │ ② 《客先提示》/jtbc:client-review detailed_design … 内部承認済みの詳細設計書をお客様へ提示・ご承認で次へ
    ▼
  実装 (IMPLEMENTATION)
    │ /jtbc:phase next         … 主任が完了確認 (審査会なし)
@@ -365,16 +367,22 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 6つの審査会(`modes/jtbc.yaml#gates` を正とする)。各ゲートは「必要書類 + 承認者 + チェックリスト」。
 
-| gate | 前→次 | 必要書類 | 承認者 | 客先レビュー前提 |
+| gate | 前→次 | 必要書類 | 承認者 | 客先提示 |
 |---|---|---|---|---|
-| proposal (提案審査) | 提案→要件定義 | 提案書 | 課長,部長,社長 | 要 |
-| project_plan (PJ計画審査) | 要件定義→基本設計 | 計画書,要件定義書,リスク登録簿 | 課長,部長,主任 | 要 |
-| basic_design (基本設計審査) | 基本設計→詳細設計 | 基本設計書,課題管理簿 | 課長,部長 | 要 |
-| detailed_design (詳細設計審査) | 詳細設計→実装 | 詳細設計書,WBS,テスト計画書 | 課長,主任,部長 | 要 |
+| proposal (提案審査) | 提案→要件定義 | 提案書 | 課長,部長,社長 | 内部承認後に提示 |
+| project_plan (PJ計画審査) | 要件定義→基本設計 | 計画書,要件定義書,リスク登録簿 | 課長,部長,主任 | 内部承認後に提示 |
+| basic_design (基本設計審査) | 基本設計→詳細設計 | 基本設計書,課題管理簿 | 課長,部長 | 内部承認後に提示 |
+| detailed_design (詳細設計審査) | 詳細設計→実装 | 詳細設計書,WBS,テスト計画書 | 課長,主任,部長 | 内部承認後に提示 |
 | release (リリース判定会) | 総合テスト→リリース済 | テスト結果報告書,納品一覧 | 課長,主任,部長,社長 | — |
 | completion (PJ完了審査) | リリース済→完了 | 教訓登録簿,完了承認書 | 課長,部長,社長 | — |
 
-- **客先レビュー**: 「要」のゲートは、社内審査会の前に `/jtbc:client-review <gate>` でお客様のご承認(`state.json#client_reviews[<gate>].status==APPROVED`)を得るのが前提。未承認なら gate を開催できない(`/jtbc:gate` 側で機械チェック)。顧客版の根回し
+- **内部承認 → 客先提示の順序(重要)**: 提案/要件/基本設計/詳細設計の各ゲートは `internal_approval_first: true`。
+  まず `/jtbc:gate <gate>` で **上位承認(内部承認)** を得て、**その後** `/jtbc:client-review <gate>` で
+  内部承認済みの成果物をお客様へ提示(パス明示・「ご査収ください」)し、ご承認を賜る。
+  **内部承認前の文書をお客様に出してはならない。**
+- **phase 遷移の所在**: `internal_approval_first` のゲートでは gate は phase を進めず(`previous_phase` のまま据え置き)、
+  **client-review のご承認(APPROVED)で `next_phase` へ進む**。`release`/`completion` は gate 承認で直接進む。
+- **客先レビューのご指摘時**: 成果物を修正し、当該ゲートの内部承認(`approvals`)をクリア。再度 gate → client-review の順。
 - **根回し**: 審査会の前に、owner(課長/主任)が承認者へ事前説明し論点を潰す(任意・推奨)
 - **承認印**: 承認は 🔴 のハンコ表現で文書へ押印する
 - **工程内遷移**: 実装→単体→総合テストはゲート無し。主任が `/jtbc:phase next` で進める
@@ -436,8 +444,13 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 ユーザーは「JTBCに開発を発注したお客様」。ユーザー向け応答は受注ベンダーの窓口として丁重な敬語で行う(`customer-relations` skill)。
 
 - 窓口は原則 **課長**、重要局面は **部長**、決裁は **社長**。担当・主任・SESは原則前面に出ない
-- 受注御礼(`/jtbc:init`時)、進捗ご報告、ご要望の受領、お詫び(インシデント時)に定型トーンを用意
+- 受注御礼(提案ご承認時)、進捗ご報告、ご要望の受領、お詫び(インシデント時)に定型トーンを用意
 - 安請け合いしない。スコープ・納期の約束は社内手続き(稟議・審査)を経てから
+- **要望ヒアリングは1問ずつ・推奨案つき**(`requirements-interview` / `/jtbc:hearing`、grill-me 方式)
+- **見積りは実測可能な値で表す(嘘をつかない)**: 費用は架空の「○○万円」ではなく **概算トークン数**
+  (本プラグインにおける実質コスト)、期間/工数は「○○週間」ではなく **概算プロンプト数=やり取りの
+  往復回数** で表す
+- **成果物の客先提示は内部承認の後**。提示はパスを示し「ご査収ください」と正式文書として連携する
 
 ### 例: 受注御礼
 
@@ -451,7 +464,8 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 | 施策 | 内容 | 実装箇所 |
 |---|---|---|
-| **客先レビュー** | 社内審査会の前に成果物をお客様へ提示し承認を賜る(顧客版の根回し) | client-review command / governance skill / client_review template |
+| **要望ヒアリング** | 課長が1問ずつ・推奨案つきで要望を引き出し共通理解を得る(grill-me 方式) | requirements-interview skill / hearing command |
+| **客先レビュー(ご査収)** | 社内の内部承認を得た成果物を、パス明示で「ご査収ください」とお客様へ提示し承認を賜る | client-review command / governance skill / client_review template |
 | **根回し** | 審査会前に owner が承認者へ事前説明し論点を潰す | governance skill / gate command |
 | **報連相** | 指揮系統を飛ばさない。悪い報告ほど早く | governance skill / 各agent |
 | **承認印(ハンコ)** | 承認は 🔴 の押印表現で文書に残す | gate / shonin / 各テンプレ |
@@ -490,17 +504,19 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 
 ### 含むもの (実装済)
 - plugin.json / marketplace.json
-- 6 agents / 13 commands / 6 skills / 5 hooks(本実装) / 17 templates / 1 mode / state schema
+- 6 agents / 14 commands / 7 skills / 5 hooks(本実装) / 17 templates / 1 mode / state schema
 
 ### 検収シナリオ (MVPが「動いた」と言える基準)
 
 ```
-1. /jtbc:init で .jtbc/ 一式 + 受注御礼 + 体制図が生成される
-2. ご要望を伝える → 課長が提案書を起案
-3. /jtbc:client-review proposal でお客様へ提案内容を提示・承認取得 → /jtbc:gate proposal で 課長→部長→社長 が承認(提案審査)
-4. 課長が要件定義書・計画書を作成 → /jtbc:client-review project_plan(お客様承認) → /jtbc:gate project_plan
-5. 課長が基本設計 → /jtbc:client-review basic_design(お客様承認) → /jtbc:gate basic_design
-6. 主任が詳細設計・WBS・テスト計画 → /jtbc:client-review detailed_design(お客様承認) → /jtbc:gate detailed_design
+1. /jtbc:init で .jtbc/ 一式 + 体制図が生成される(受注御礼はまだ述べない)
+2. /jtbc:hearing で課長が要望を1問ずつ引き出す → 共通理解を得て提案書を起案
+   (費用=トークン数 / 期間=往復回数 で見積る。架空の万円・週は使わない)
+3. /jtbc:gate proposal で 課長→部長→社長 が内部承認(=上位承認)→ /jtbc:client-review proposal で
+   内部承認済みの提案書を「ご査収ください」と提示 → お客様ご承認(=受注御礼)で要件定義へ
+4. 課長が要件定義書・計画書を作成 → /jtbc:gate project_plan(内部承認) → /jtbc:client-review project_plan(お客様承認)
+5. 課長が基本設計 → /jtbc:gate basic_design(内部承認) → /jtbc:client-review basic_design(お客様承認)
+6. 主任が詳細設計・WBS・テスト計画 → /jtbc:gate detailed_design(内部承認) → /jtbc:client-review detailed_design(お客様承認)
 7. 主任が担当/外注SESへタスクを割り振り、実装
 8. /jtbc:phase next で 実装→単体テスト→総合テスト と進む
 9. 実装中に要件変更ニーズ発覚 → /jtbc:ringi new requirement → 主任→課長→部長→社長 承認
