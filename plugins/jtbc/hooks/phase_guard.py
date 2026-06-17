@@ -59,7 +59,7 @@ def main() -> int:
         print(
             f"[phase_guard] BLOCKED: 現フェーズ '{phase}' では '{relative}' への書込みは禁止です。\n"
             f"ソースコードを編集できるのは 実装 / 単体テスト / 総合テスト フェーズのみです。\n"
-            f"実装フェーズに入るには /jtbc:gate detailed_design を通過してください。",
+            f"実装フェーズに入るには、詳細設計の内部審査(社内で自動開催)とお客様のご承認を完了してください。",
             file=sys.stderr,
         )
         return 2
