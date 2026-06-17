@@ -40,11 +40,12 @@ phases:
   - COMPLETION_REVIEW     # PJ完了審査
   - COMPLETED             # 完了
 
-# ゲート(審査会)。approvers は当該審査フェーズで ◎/○ が付く全役職。
-# ◎ = 招集・進行・起案責任者(owner) / ○ = 審査・承認参加者。
-# owner(◎)は審査会の招集・進行・起案責任者であり、approvers にも含まれる。
-# owner の承認は「自分の起案に責任を持つ」ためのものであり、
-# 自己承認は仕様(バグではない)。
+# ゲート(審査会)。
+# ◎ owner = 招集・進行・起案責任者(成果物を起案する役職)。
+# approvers = owner の起案を審査・承認するレビュー者(○)。
+# 【自己レビュー禁止】owner は自分が起案した成果物の承認者にならない。
+#   起案者(owner)は approvers に含めない。これにより「作成者≠承認者」を担保する。
+#   (旧仕様の owner 自己承認は廃止。)
 #
 # 【承認と客先提示の順序(重要)】
 #   内部承認(社内審査会=ゲート)を **先に** 行い、上位承認を得てから成果物をお客様へ提示する。
@@ -72,7 +73,7 @@ gates:
     owner: kacho
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [proposal]
-    approvers: [kacho, bucho, shacho]
+    approvers: [bucho, shacho]    # 起案者 kacho は自己レビューしないため除外
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 提案内容・プロジェクト計画方針
       documents: [proposal]
@@ -86,7 +87,7 @@ gates:
     owner: kacho
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [project_plan, requirements, risk_register]
-    approvers: [kacho, bucho, shunin]
+    approvers: [bucho, shunin]    # 起案者 kacho を除外
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 要件定義書
       documents: [requirements]
@@ -100,7 +101,7 @@ gates:
     owner: kacho
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [basic_design, issue_log]
-    approvers: [kacho, bucho]
+    approvers: [bucho]            # 起案者 kacho を除外(部長が承認)
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 基本設計書
       documents: [basic_design]
@@ -114,7 +115,7 @@ gates:
     owner: shunin
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [detailed_design, wbs, test_plan]
-    approvers: [kacho, shunin, bucho]
+    approvers: [kacho, bucho]     # 起案者 shunin を除外(課長・部長が承認)
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 詳細設計書
       documents: [detailed_design]
@@ -127,14 +128,14 @@ gates:
     next_phase: RELEASED
     owner: kacho
     required_documents: [test_report, deliverables_list]
-    approvers: [kacho, shunin, bucho, shacho]
+    approvers: [shunin, bucho, shacho]   # 起案者 kacho を除外
   completion:                     # PJ完了審査
     previous_phase: RELEASED
     review_phase: COMPLETION_REVIEW
     next_phase: COMPLETED
     owner: kacho
     required_documents: [lessons_learned, completion_approval]
-    approvers: [kacho, bucho, shacho]
+    approvers: [bucho, shacho]    # 起案者 kacho を除外
     extra_requirements:
       lessons_min_approved: 3
 
@@ -151,12 +152,16 @@ ringi_required_for:
   - scope_change
   - effort_increase
 
+# 稟議の承認経路(回覧順)。起案者(CRを起票・影響分析する役職)は承認者に含めない
+# (起案者≠承認者。gate と同じ思想)。技術系CR(requirement/design/tech_stack/effort)は
+# 主任が起案するため主任を除外、scope は課長が起案するため課長を除外する。
+# 起案者は frontmatter の created_by に記録し、承認パスには現れない。
 ringi_workflow:
-  requirement: [shunin, kacho, bucho, shacho]
-  design:      [shunin, kacho, bucho]
-  tech_stack:  [shunin, kacho, bucho]
-  scope:       [kacho, bucho, shacho]
-  effort:      [shunin, kacho, bucho]
+  requirement: [kacho, bucho, shacho]   # 起案者 shunin を除外
+  design:      [kacho, bucho]           # 起案者 shunin を除外
+  tech_stack:  [kacho, bucho]           # 起案者 shunin を除外
+  scope:       [bucho, shacho]          # 起案者 kacho を除外
+  effort:      [kacho, bucho]           # 起案者 shunin を除外
 
 # 会議体。frequency: high|medium|low、audience: internal|client。
 events:

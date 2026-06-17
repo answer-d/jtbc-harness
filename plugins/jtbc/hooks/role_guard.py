@@ -5,8 +5,10 @@ role_guard.py — JTBC PreToolUse hook
 現在の役職 agent のシステムプロンプトで明示された
 「触ってよいパス」「触ってはいけないパス」を強制する。
 
-役職判定は payload.agent_name (Claude Code が PreToolUse に渡す
-subagent 名) を見る。例: "jtbc-shacho", "jtbc-tantou", "jtbc-ses"。
+役職判定は payload.agent_type (Claude Code が PreToolUse に渡す
+subagent の frontmatter name) を見る。例: "jtbc-shacho", "jtbc-tantou", "jtbc-ses"。
+※ 司令塔(メインセッション)からの書込みは agent_type を持たないため
+  本ガードは素通りする(役職振り分けはサブエージェント起動が前提)。
 
 ルール: agents/jtbc-<role>.md の冒頭で記述している禁止/許可パスを
 本ファイル内のテーブル ROLE_RULES に映している。
@@ -70,7 +72,11 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
 
-    agent_name = payload.get("agent_name") or payload.get("subagent_name")
+    agent_name = (
+        payload.get("agent_type")
+        or payload.get("agent_name")
+        or payload.get("subagent_name")
+    )
     tool_input = payload.get("tool_input", {})
     file_path = tool_input.get("file_path") or tool_input.get("path")
     if not file_path or not agent_name:

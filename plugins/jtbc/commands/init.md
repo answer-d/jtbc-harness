@@ -91,11 +91,7 @@ argument-hint: "[project-name]"
 
    | コピー元 | コピー先 |
    |---|---|
-   | `proposal.md` | `.jtbc/proposal/proposal.md` |
    | `project_plan.md` | `.jtbc/plans/project_plan.md` |
-   | `requirements.md` | `.jtbc/requirements/requirements.md` |
-   | `basic_design.md` | `.jtbc/designs/basic_design.md` |
-   | `detailed_design.md` | `.jtbc/designs/detailed_design.md` |
    | `wbs.md` | `.jtbc/wbs/wbs.md` |
    | `risk_register.md` | `.jtbc/risks/risk_register.md` |
    | `issue_log.md` | `.jtbc/issues/issue_log.md` |
@@ -105,19 +101,30 @@ argument-hint: "[project-name]"
    | `lessons_learned.md` | `.jtbc/lessons/lessons_learned.md` |
    | `completion_approval.md` | `.jtbc/deliverables/completion_approval.md` |
 
+   > **稟議ガード対象の4文書は init では配置しない**(`ringi_guard` が物理的にブロックする)。
+   > これらは各フェーズで **起案者の役職サブエージェントが起案** する(司令塔=メインは書かない):
+   >
+   > | 文書 | 起案者(サブエージェント) | 起案フェーズ |
+   > |---|---|---|
+   > | `.jtbc/proposal/proposal.md` | 課長 (`jtbc:jtbc-kacho`) | PROPOSAL(ヒアリング後) |
+   > | `.jtbc/requirements/requirements.md` | 課長 (`jtbc:jtbc-kacho`) | REQUIREMENTS |
+   > | `.jtbc/designs/basic_design.md` | 課長 (`jtbc:jtbc-kacho`) | BASIC_DESIGN |
+   > | `.jtbc/designs/detailed_design.md` | 主任 (`jtbc:jtbc-shunin`) | DETAILED_DESIGN |
+
 5. `.jtbc/org/organization.md` に体制図を生成(roster を反映):
 
-体制には **本案件にアサインされた要員(課長以下)** のみを記載する。
-部長・社長は承認/エスカレーション先として別記し、外注SESは既定では載せない
+体制には **本案件にアサインされた要員** のみを記載する。
+**部長を本案件のプロジェクト責任者** として最上位に置く。
+社長は社内の最終承認者だが **体制図には表示しない**(裏方)。外注SESは既定では載せない
 (必要になった時点で部長承認のうえ払い出し、roster と体制図を更新する)。
 
 ```
 【プロジェクト体制】(本案件の担当)
-課長  jtbc-kacho    PM・お客様窓口  ★主たる窓口
- └ 主任  jtbc-shunin   PL・テックリード
-     └ 担当  jtbc-tantou  (1名)
+部長  jtbc-bucho    プロジェクト責任者(計画承認・リスク管理・要員)
+ └ 課長  jtbc-kacho    PM・お客様窓口  ★主たる窓口
+     └ 主任  jtbc-shunin   PL・テックリード
+         └ 担当  jtbc-tantou  (1名)
 
-承認・エスカレーション: 部長 jtbc-bucho / 社長 jtbc-shacho(審査会など要所のみ関与)
 増員枠: 外注SES jtbc-ses(必要時に部長承認のうえ払い出し / 既定0名)
 ```
 
@@ -134,7 +141,7 @@ argument-hint: "[project-name]"
 ✅ JTBC プロジェクト初期化完了
 プロジェクト: <project_name> (<project_code>)
 現フェーズ: 提案 (PROPOSAL)
-体制: 課長/主任/担当(1)   ※承認: 部長/社長  ／  増員: 外注SES(必要時)
+体制: 部長(PJ責任者)/課長/主任/担当(1)   ／  増員: 外注SES(必要時)
 ─────────────────────────────────────────
 ```
 
