@@ -61,14 +61,14 @@ argument-hint: "<add \"問題\" \"原因\" \"対策\" | list | export>"
 ファイル: .jtbc/lessons/lessons_learned.md
 
 次のステップ: 課長(/jtbc:role kacho)と部長(/jtbc:role bucho)のレビューを受けてください。
-PJ完了審査(/jtbc:gate completion)では教訓が3件以上 APPROVED 状態である必要があります。
+PJ完了審査(司令塔が自動開催)では教訓が3件以上 APPROVED 状態である必要があります。
 根本原因の掘り下げには なぜなぜ分析(naze-naze スキル)を使ってください。
 インシデント由来の教訓は、障害報告書からの転記でも構いません。
 ```
 
 ## 完了審査との関係
 
-JTBCではプロジェクト完了時に必ず教訓を記録します。完了審査(`/jtbc:gate completion`)の前提条件:
+JTBCではプロジェクト完了時に必ず教訓を記録します。完了審査(司令塔が自動開催)の前提条件:
 
 - 教訓が **3件以上** ある
 - すべて **APPROVED** 状態

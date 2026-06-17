@@ -6,7 +6,7 @@ argument-hint: "<next | show>"
 # /jtbc:phase
 
 審査会(ゲート)を挟まない **工程内の前進** を扱います。
-ゲートを伴う遷移は `/jtbc:gate` を使ってください。
+審査会(ゲート)を伴う遷移は、お客様の操作ではなく **司令塔が自動開催** します(`governance` スキル)。
 
 > 対象は `modes/jtbc.yaml#linear_transitions` に定義された辺のみ:
 > - 実装 (IMPLEMENTATION) → 単体テスト (UNIT_TEST)
@@ -25,7 +25,7 @@ argument-hint: "<next | show>"
 動作:
 1. `state.json#phase` を読む
 2. `linear_transitions` に `from == 現phase` の辺があるか確認
-   - 無い(= ゲートが必要)→ 中止し、対応する `/jtbc:gate <name>` を案内
+   - 無い(= ゲートが必要)→ 中止。ゲートは司令塔が自動開催するため、本コマンドの対象外である旨を案内
 3. **主任(owner)** が当該工程の完了を確認(下記の完了条件)。未達なら中止
 4. 内部定例での合意を前提に、`state.json#phase` を `to` へ更新
 5. 結果を表示
@@ -37,7 +37,7 @@ argument-hint: "<next | show>"
 | 実装 → 単体テスト | WBS の実装タスクが全て DONE、ビルドが通る |
 | 単体テスト → 総合テスト | 単体テストが全 PASS(or 残課題化)、カバレッジ目標達成 |
 
-総合テスト完了後は `/jtbc:gate release`(リリース判定会)へ進みます。
+総合テスト完了後は、司令塔が **リリース判定会を自動開催** します(お客様の操作は不要)。
 
 ## 出力例
 

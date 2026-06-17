@@ -46,7 +46,7 @@ status: PENDING | APPROVED | REVISION_REQUESTED
 
 > 結果は `state.json#client_reviews[<gate>].status` に記録する。
 > APPROVED で次フェーズへ進む。REVISION_REQUESTED の場合は当該ゲートの内部承認をクリアし、
-> 修正 → `/jtbc:gate <gate>`(再・内部承認)→ `/jtbc:client-review <gate>` の順で進める。
+> 修正 → 内部審査(社内で自動開催・再承認)→ 客先提示(自動発火)の順で進める。
 
 ## 4. 次のステップ
 
