@@ -37,8 +37,8 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
                                             に従い、ユーザー操作を待たず社内審査→客先提示まで自動で進める
    b. 要件追加・変更の要望:
       - phase ∈ {PROPOSAL, REQUIREMENTS} → 課長へ(初版作成中なら稟議不要)
-      - それ以外                          → 「変更管理(稟議)が必要」と /jtbc:ringi new requirement を案内
-   c. 設計変更の要望                      → 同上、稟議経由(/jtbc:ringi new design)
+      - それ以外                          → **司令塔が変更管理(稟議)を自動処理**(下記)。お客様に稟議を操作させない
+   c. 設計変更の要望                      → 同上、変更管理(稟議)を自動処理
    d. 実装の依頼                          → phase をチェック:
       - phase ∈ {IMPLEMENTATION, UNIT_TEST, INTEGRATION_TEST} なら active_wbs_task を確認 → 主任が担当/SESへ割り振り
       - それ以外                          → 詳細設計の内部審査・お客様のご承認が未了の旨を伝える
@@ -229,9 +229,19 @@ active_gate: null
 - 部長は担当へ直接指示しない(課長経由)。社長の思いつきは部長が受けて課長へ下ろす
 - 「困ったら早めに相談」「悪い報告ほど早く」を徹底(抱え込みが最大の罪)
 
-## 稟議承認パス決定 (/jtbc:ringi の実体)
+## 変更管理(稟議)の自動処理 (司令塔が起票〜承認まで自動で回す)
 
-`modes/jtbc.yaml#ringi_workflow` から決定:
+> **お客様(ユーザー)に稟議を操作させてはならない。** お客様の役割は「変えたい」と仰ることだけ。
+> 起票・承認パス・押印・反映/謝絶は **すべてベンダー社内の処理** であり、司令塔が自動で回す。
+> (旧 `/jtbc:ringi` / `/jtbc:shonin` コマンドは撤去済み。お客様には結果だけを丁重にご報告する。)
+
+初版作成中(phase ∈ {PROPOSAL, REQUIREMENTS})の調整は稟議不要。それ以降の要件/設計/技術選定/
+スコープ/工数の変更は、お客様の要望(または社内の担当・主任の気づき)を起点に、以下を自動実行する:
+
+1. **起票**: 変更種別(type)を判定し、`change_request` テンプレで `.jtbc/changes/pending/CR-NNN.md`
+   を起票(連番採番)。背景/変更内容/影響範囲/代替案、および **改訂対象ドキュメントの相対パス** を埋める。
+   `state.json#active_ringi` に CR-NNN を追加。
+2. **承認パス決定**: `modes/jtbc.yaml#ringi_workflow` から経路を引く:
 
 ```yaml
 ringi_workflow:
@@ -241,6 +251,16 @@ ringi_workflow:
   scope:       [kacho, bucho, shacho]
   effort:      [shunin, kacho, bucho]
 ```
+
+3. **自動承認(押印)**: 経路上の各役職 agent を順に起動し、責務領域に照らして approve/reject を判断させ、
+   CR 本文の承認パス表へ **承認印(🔴)** を押す(`ringi_guard` が経路飛ばしを物理的に阻止)。
+4. **承認(APPROVED)時**: frontmatter の `status` を `APPROVED` にし、ファイルを `.jtbc/changes/approved/`
+   へ移動、`active_ringi` から外す(これで `ringi_guard` が当該ドキュメントの改訂を許可)。変更を成果物へ反映し、
+   必要なら **内部審査(自動開催)→ 客先提示(自動発火)** を再実行する。
+5. **却下(REJECTED)時**: `.jtbc/changes/rejected/` へ移動、`active_ringi` から外す。お客様の要望由来なら、
+   **安請け合いせず** 却下理由(影響・コスト等)を `customer-relations` トーンで丁重にご説明する。
+6. **ご報告**: 結果(承認/却下、影響範囲、次のステップ)をお客様へ分かる言葉でご報告する。
+   稟議の往復(社内の役職名・押印過程)は **簡潔な経過** として示してよい(様式美の演出)。
 
 ## 会議体・インシデント
 

@@ -87,7 +87,7 @@ def main() -> int:
         print(
             f"[role_guard] BLOCKED: 役職 '{agent_name}' は '{relative}' への書込みが禁止されています。\n"
             f"必要であれば別 role に切替えてください: /jtbc:role <role>。\n"
-            f"要件/設計変更が必要な場合は /jtbc:ringi new <type> で稟議を起票してください。",
+            f"要件/設計変更が必要な場合は、司令塔が変更管理(稟議)を社内で自動処理します(governance スキル)。",
             file=sys.stderr,
         )
         return 2

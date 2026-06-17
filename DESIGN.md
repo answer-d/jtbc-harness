@@ -125,8 +125,9 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 ### 2.2 Plugin が提供するもの
 
 - **Subagents (6)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES
-- **Slash Commands (13)**: init / status / client-review / hearing / phase / ringi / shonin / noubi / kyokun / role / mode / meeting / incident
-  - ※ 内部審査(ゲート)はユーザー操作のコマンドではなく、**司令塔(governance)が自動開催** する。
+- **Slash Commands (11)**: init / status / client-review / hearing / phase / noubi / kyokun / role / mode / meeting / incident
+  - ※ 内部審査(ゲート)・変更管理(稟議)はユーザー操作のコマンドではなく、**司令塔(governance)が自動処理** する
+    (旧 gate / ringi / shonin コマンドは撤去済み)。
     client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
 - **Skills (7)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
 - **Hooks (5)**: PreToolUse 4種 (phase_guard / role_guard / ringi_guard / incident_guard) + UserPromptSubmit 1種 (superior_visit)
@@ -165,9 +166,8 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   └── jtbc-ses.md      (外注SES / model: haiku)
     ├── commands/
     │   ├── init.md    status.md  client-review.md
-    │   ├── hearing.md phase.md   ringi.md  shonin.md
-    │   ├── noubi.md   kyokun.md  role.md   mode.md
-    │   └── meeting.md incident.md
+    │   ├── hearing.md phase.md   noubi.md  kyokun.md
+    │   ├── role.md    mode.md    meeting.md incident.md
     ├── skills/
     │   ├── governance/SKILL.md
     │   ├── document-writer/SKILL.md
@@ -354,6 +354,9 @@ APPROVED で `pending/ → approved/` へ移動。経路を飛ばした承認は
 
 ## 7. 承認フロー (稟議)
 
+変更管理(稟議)は **お客様の操作ではなく、司令塔(governance)が起票〜承認まで自動処理** する
+(旧 `/jtbc:ringi` / `/jtbc:shonin` コマンドは撤去済み。お客様には結果だけを丁重にご報告する)。
+
 | 変更種別 | 起票 | 承認経路 |
 |---|---|---|
 | 要件変更 | 担当/課長 | 主任 → 課長 → 部長 → 社長 |
@@ -363,7 +366,7 @@ APPROVED で `pending/ → approved/` へ移動。経路を飛ばした承認は
 | 工数追加 | 担当/主任 | 主任 → 課長 → 部長 |
 
 hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を物理的に阻止する。
-詳細は `commands/ringi.md` / `commands/shonin.md`。
+実行ロジックの正本は `skills/governance/SKILL.md`「変更管理(稟議)の自動処理」。
 
 ---
 
@@ -474,7 +477,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 | **客先レビュー(ご査収)** | 社内の内部承認を得た成果物を、パス明示で「ご査収ください」とお客様へ提示し承認を賜る(内部承認後に自動発火) | governance skill / client-review command(手動再提示用) / client_review template |
 | **根回し** | 審査会(自動開催)前に owner が承認者へ事前説明し論点を潰す | governance skill |
 | **報連相** | 指揮系統を飛ばさない。悪い報告ほど早く | governance skill / 各agent |
-| **承認印(ハンコ)** | 承認は 🔴 の押印表現で文書に残す | governance skill / shonin / 各テンプレ |
+| **承認印(ハンコ)** | 承認は 🔴 の押印表現で文書に残す | governance skill / 各テンプレ |
 | **議事録** | すべての会議で議事録を残す | meetings skill / meeting_minutes template |
 | **接遇・敬語** | お客様への丁重な応対 | customer-relations skill |
 | **なぜなぜ分析** | インシデント・教訓の真因を5 Whysで究明 | naze-naze skill |
@@ -526,7 +529,7 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 6. 主任が詳細設計・WBS・テスト計画 → (自動)詳細設計審査 → (自動)客先提示でお客様承認
 7. 主任が担当/外注SESへタスクを割り振り、実装
 8. /jtbc:phase next で 実装→単体テスト→総合テスト と進む
-9. 実装中に要件変更ニーズ発覚 → /jtbc:ringi new requirement → 主任→課長→部長→社長 承認
+9. 実装中に要件変更ニーズ発覚 → (自動)変更管理(稟議)を起票し 主任→課長→部長→社長 が自動承認 → 結果をご報告
 10. 作業中の事故発生 → /jtbc:incident open → 緊急報告 → なぜなぜ分析 → 障害報告書 → close
 11. 定例を開催 → /jtbc:meeting internal / client / status
 12. (自動)リリース判定会
