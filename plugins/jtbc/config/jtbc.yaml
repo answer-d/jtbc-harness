@@ -22,6 +22,19 @@ agent_name_map:
   tantou: jtbc-tantou
   ses: jtbc-ses
 
+# 客対窓口(営業)。メインセッション(司令塔)がお客様に応対するときに名乗る人格。
+# - 開発組織(roles)の **外側** に立つ窓口。承認権限を持たず、ガバナンス文書も起案しない。
+# - **サブエージェント化しない**。お客様との逐次対話(1問ずつのヒアリング・ご承認の往復)は
+#   一発実行のサブエージェントでは行えないため、メインセッション自身が「営業」として応対する。
+#   裏方の起案・審査・承認は従来どおり課長以下のサブエージェントが担う(司令塔がオーケストレーション)。
+# - 営業は客対の一次窓口。**重要局面(客先設計レビューの技術説明・インシデント謝罪等)では
+#   課長・部長を「弊社PM/責任者」として同席紹介** し、その役職の言葉を客前で述べる。
+customer_window:
+  persona: eigyo                          # 営業(窓口担当)= メインセッションの客対人格
+  is_subagent: false                      # jtbc-* サブエージェントではない(メインセッションが務める)
+  approval_authority: false               # 承認・起案の権限なし(開発組織の外側)
+  escorts_at_key_moments: [kacho, bucho]  # 重要局面で同席・紹介する役職(課長=PM / 部長=責任者)
+
 # 工程フェーズ。*_REVIEW は審査会(ゲート)開催中の一時状態。
 phases:
   - PROPOSAL              # 提案
@@ -43,9 +56,17 @@ phases:
 # ゲート(審査会)。
 # ◎ owner = 招集・進行・起案責任者(成果物を起案する役職)。
 # approvers = owner の起案を審査・承認するレビュー者(○)。
+# reviewers = 承認印は押さないが、事前レビュー・記載協力で審査に関与する役職(任意)。
 # 【自己レビュー禁止】owner は自分が起案した成果物の承認者にならない。
 #   起案者(owner)は approvers に含めない。これにより「作成者≠承認者」を担保する。
 #   (旧仕様の owner 自己承認は廃止。)
+# 【承認は起案者より上位のみ(重要)】役職の上下は roles の並び順
+#   (社長 > 部長 > 課長 > 主任 > 担当 > 外注SES)。**承認(押印)できるのは
+#   起案者(owner)より上位の役職に限る。** 起案者と同位・下位の役職は approvers に
+#   含めない。下位役職が上位の起案を承認する不自然(例: 課長起案の計画書を主任が承認)を
+#   排除する。下位役職に事前レビュー・記載協力をさせたいときは approvers ではなく
+#   reviewers に置く(関与はするが承認印は押さない)。この原則はゲート/稟議/文書承認の
+#   すべてに共通する。
 #
 # 【承認と客先提示の順序(重要)】
 #   内部承認(社内審査会=ゲート)を **先に** 行い、上位承認を得てから成果物をお客様へ提示する。
@@ -63,8 +84,8 @@ phases:
 #   (お客様対応は別途、客先向け会議・検収で実施)。
 #
 # client_review: 内部承認後にお客様へ成果物を提示し、確認・ご承認を得る工程(自動発火)。
-#   課長(窓口)が成果物のパスを示して「ご査収ください」と提示する。
-#   内部承認が未完了の間は客先提示を実施できない(機械チェック)。
+#   営業(窓口=メインセッション)が成果物のパスを示して「ご査収ください」と提示する
+#   (重要局面では課長を同席紹介)。内部承認が未完了の間は客先提示を実施できない(機械チェック)。
 gates:
   proposal:                       # 提案審査
     previous_phase: PROPOSAL
@@ -87,7 +108,8 @@ gates:
     owner: kacho
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [project_plan, requirements, risk_register]
-    approvers: [bucho, shunin]    # 起案者 kacho を除外
+    approvers: [bucho]            # 起案者 kacho より上位のみ(社長は本ゲート不在のため部長が承認)
+    reviewers: [shunin]           # 主任は WBS実現性の事前レビュー・記載協力で関与(承認印は押さない)
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 要件定義書
       documents: [requirements]
@@ -128,7 +150,8 @@ gates:
     next_phase: RELEASED
     owner: kacho
     required_documents: [test_report, deliverables_list]
-    approvers: [shunin, bucho, shacho]   # 起案者 kacho を除外
+    approvers: [bucho, shacho]    # 起案者 kacho より上位のみ(主任は下位のため承認者から除外)
+    reviewers: [shunin]           # 主任はテスト結果・残課題の事前レビューで関与(承認印は押さない)
   completion:                     # PJ完了審査
     previous_phase: RELEASED
     review_phase: COMPLETION_REVIEW
@@ -153,8 +176,9 @@ ringi_required_for:
   - effort_increase
 
 # 稟議の承認経路(回覧順)。起案者(CRを起票・影響分析する役職)は承認者に含めない
-# (起案者≠承認者。gate と同じ思想)。技術系CR(requirement/design/tech_stack/effort)は
-# 主任が起案するため主任を除外、scope は課長が起案するため課長を除外する。
+# (起案者≠承認者。gate と同じ思想)。**承認は起案者より上位の役職のみ**(上掲の原則と共通)。
+# 技術系CR(requirement/design/tech_stack/effort)は主任が起案するため主任を除外、
+# scope は課長が起案するため課長を除外する。いずれも残る承認者は起案者より上位のみで構成される。
 # 起案者は frontmatter の created_by に記録し、承認パスには現れない。
 ringi_workflow:
   requirement: [kacho, bucho, shacho]   # 起案者 shunin を除外
@@ -175,8 +199,8 @@ events:
       minutes_required: true
     client_regular_meeting:       # プロジェクト客先定例
       display: プロジェクト客先定例
-      facilitator: kacho
-      participants: [user, shunin, tantou]
+      facilitator: eigyo          # 営業(窓口)が進行。課長は弊社PMとして同席・報告
+      participants: [user, kacho, shunin, tantou]
       audience: client
       frequency: medium
       minutes_required: true
@@ -198,8 +222,8 @@ events:
   event_driven:
     client_incident_meeting:      # 客先報告会議
       display: 客先報告会議
-      facilitator: kacho
-      participants: [shunin, tantou]
+      facilitator: eigyo          # 営業(窓口)が進行。重要局面のため課長・部長を同席紹介
+      participants: [kacho, bucho, shunin, tantou]
       audience: client
       trigger: issue_or_incident
       minutes_required: true

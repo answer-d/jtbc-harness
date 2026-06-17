@@ -24,6 +24,11 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 
 - **Agents (6)** — `agents/jtbc-{shacho,bucho,kacho,shunin,tantou,ses}.md`
   (外注SES `jtbc-ses` は `model: haiku` の低コスト実装支援)
+  - ※ **客対の一次窓口は「営業」= メインセッション(司令塔)の客対人格** で、サブエージェントではない
+    (お客様との逐次対話はサブエージェント化できないため)。営業は開発組織の外側に立ち、承認権限を持たない。
+    重要局面では営業が課長(PM)・部長(責任者)を同席紹介する。定義は `config/jtbc.yaml#customer_window`。
+  - ※ **承認は起案者(owner)より上位の役職のみ**(社長>部長>課長>主任>担当>SES)。下位役職は
+    `reviewers`(事前レビュー・記載協力)として関与できるが承認印は押さない。詳細は `config/jtbc.yaml#gates`。
 - **Commands (4)** — `commands/{init,status,hearing,client-review}.md`(お客様が直接使うのはこの4つのみ)
   - ※ 内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・
     納品物整備・教訓登録などの **社内作業はコマンドではなく `governance` スキルが自動実行** する
