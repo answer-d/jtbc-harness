@@ -12,16 +12,16 @@ status: PENDING | APPROVED | REVISION_REQUESTED
 
 <!--
 - 作成者: 課長 (jtbc-kacho / お客様窓口)
-- 目的: 社内審査会(ゲート)の前に、成果物をお客様へご提示し、確認・ご承認を賜る
+- 目的: 社内審査会(ゲート)で内部承認を得た成果物を、お客様へご提示(ご査収)し、確認・ご承認を賜る
 - トーン: お客様向けの記録のため、丁重な敬語で記す (customer-relations)
-- 対象ゲート: 提案審査 / PJ計画審査 / 基本設計審査 / 詳細設計審査 の直前
+- 対象ゲート: 提案審査 / PJ計画審査 / 基本設計審査 / 詳細設計審査 の内部承認後
 -->
 
 ## レビュー情報
 
-- レビュー名: <対象>客先レビュー
-- 対象ゲート: <proposal | project_plan | basic_design | detailed_design>
-- ご提示資料: <提案書 / 要件定義書 / 基本設計書 / 詳細設計書 等>
+- レビュー名: <対象>客先レビュー(ご査収)
+- 対象ゲート: <proposal | project_plan | basic_design | detailed_design>(内部承認済み)
+- ご提示資料(パス): <例) .jtbc/proposal/proposal.md / .jtbc/requirements/requirements.md 等>
 - 日時: 
 - 弊社出席者: 課長(窓口)〔重要局面では部長も同席〕
 - お客様: {{client_name}} 御中
@@ -41,15 +41,16 @@ status: PENDING | APPROVED | REVISION_REQUESTED
 
 ## 3. ご承認結果
 
-- [ ] **ご承認**(この内容で社内審査(ゲート)へ進めてよい)
-- [ ] **ご指摘あり・要修正**(下記ご指摘を反映のうえ再レビュー)
+- [ ] **ご承認**(この内容で次フェーズへ進めてよい)
+- [ ] **ご指摘あり・要修正**(下記ご指摘を反映し、社内で再承認のうえ再レビュー)
 
 > 結果は `state.json#client_reviews[<gate>].status` に記録する。
-> APPROVED の場合のみ `/jtbc:gate <gate>` を開催できる。
+> APPROVED で次フェーズへ進む。REVISION_REQUESTED の場合は当該ゲートの内部承認をクリアし、
+> 修正 → `/jtbc:gate <gate>`(再・内部承認)→ `/jtbc:client-review <gate>` の順で進める。
 
 ## 4. 次のステップ
 
-<!-- APPROVED: 社内審査会(ゲート)を開催 / REVISION: 修正→再レビュー -->
+<!-- APPROVED: 次フェーズへ移行 / REVISION: 修正→再・内部承認→再レビュー -->
 
 - 
 

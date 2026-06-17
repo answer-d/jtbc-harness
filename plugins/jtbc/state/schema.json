@@ -111,7 +111,7 @@
     },
     "client_reviews": {
       "type": "object",
-      "description": "客先レビュー(お客様確認)の状況。対象ゲートの社内審査会を開く前提。",
+      "description": "客先提示(お客様確認)の状況。対象ゲートの内部承認(社内審査会)を得た後に実施し、ご承認(APPROVED)で次フェーズへ進む。",
       "additionalProperties": false,
       "patternProperties": {
         "^(proposal|project_plan|basic_design|detailed_design)$": {

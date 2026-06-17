@@ -46,20 +46,32 @@ phases:
 # owner の承認は「自分の起案に責任を持つ」ためのものであり、
 # 自己承認は仕様(バグではない)。
 #
-# client_review: 当該ゲート(社内審査会)を開く前に必須となる「客先レビュー」。
-#   課長(窓口)が成果物をお客様(ユーザー)へ提示し、確認・承認を取る工程。
-#   承認(APPROVED)が state.json#client_reviews[<gate>] に記録されるまで
-#   /jtbc:gate <gate> は開催できない(顧客版の根回し)。
-#   client_review を持たないゲート(release/completion)は別途、客先向け会議で対応する。
+# 【承認と客先提示の順序(重要)】
+#   内部承認(社内審査会=ゲート)を **先に** 行い、上位承認を得てから成果物をお客様へ提示する。
+#   内部承認前の文書をお客様に出してはならない。したがって:
+#     1. owner が成果物を起案
+#     2. /jtbc:gate <gate>          … 社内審査会で承認者が承認(= 上位承認 / 客先提示の前提)
+#     3. /jtbc:client-review <gate> … 内部承認済みの成果物をお客様へ提示し、ご承認を賜る
+#
+# client_review を持つゲート(proposal/project_plan/basic_design/detailed_design)は、
+#   gate(内部承認)では phase を進めず、client-review でお客様のご承認(APPROVED)を得た時点で
+#   phase を next_phase へ進める。internal_approval_first: true がその目印。
+# client_review を持たないゲート(release/completion)は gate の承認で直接 phase を進める
+#   (お客様対応は別途、客先向け会議・検収で実施)。
+#
+# client_review: 内部承認後にお客様へ成果物を提示し、確認・ご承認を得る工程。
+#   課長(窓口)が成果物のパスを示して「ご査収ください」と提示する。
+#   gate(内部承認)が未完了の間は client-review を実施できない(client-review 側で機械チェック)。
 gates:
   proposal:                       # 提案審査
     previous_phase: PROPOSAL
     review_phase: PROPOSAL_REVIEW
     next_phase: REQUIREMENTS
     owner: kacho
+    internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [proposal]
     approvers: [kacho, bucho, shacho]
-    client_review:                # 提案審査の前提: 客先レビュー
+    client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 提案内容・プロジェクト計画方針
       documents: [proposal]
       facilitator: kacho
@@ -70,9 +82,10 @@ gates:
     review_phase: PROJECT_PLAN_REVIEW
     next_phase: BASIC_DESIGN
     owner: kacho
+    internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [project_plan, requirements, risk_register]
     approvers: [kacho, bucho, shunin]
-    client_review:                # PJ計画審査の前提: 客先レビュー
+    client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 要件定義書
       documents: [requirements]
       facilitator: kacho
@@ -83,9 +96,10 @@ gates:
     review_phase: BASIC_DESIGN_REVIEW
     next_phase: DETAILED_DESIGN
     owner: kacho
+    internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [basic_design, issue_log]
     approvers: [kacho, bucho]
-    client_review:                # 基本設計審査の前提: 客先レビュー
+    client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 基本設計書
       documents: [basic_design]
       facilitator: kacho
@@ -96,9 +110,10 @@ gates:
     review_phase: DETAILED_DESIGN_REVIEW
     next_phase: IMPLEMENTATION
     owner: shunin
+    internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
     required_documents: [detailed_design, wbs, test_plan]
     approvers: [kacho, shunin, bucho]
-    client_review:                # 詳細設計審査の前提: 客先レビュー
+    client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 詳細設計書
       documents: [detailed_design]
       facilitator: kacho
