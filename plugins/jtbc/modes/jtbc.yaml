@@ -138,8 +138,8 @@ gates:
     extra_requirements:
       lessons_min_approved: 3
 
-# ゲートを伴わない工程内遷移(/jtbc:phase next で進む)。
-# 実装→単体テスト→総合テストは主任が完了を確認して進める。
+# ゲートを伴わない工程内遷移。実装→単体テスト→総合テストは主任が完了を確認したら
+# 司令塔(governance)が自動で進める(お客様の操作は不要。専用コマンドは持たない)。
 linear_transitions:
   - {from: IMPLEMENTATION, to: UNIT_TEST, owner: shunin}
   - {from: UNIT_TEST, to: INTEGRATION_TEST, owner: shunin}

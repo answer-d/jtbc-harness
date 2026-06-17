@@ -125,10 +125,11 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 ### 2.2 Plugin が提供するもの
 
 - **Subagents (6)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES
-- **Slash Commands (11)**: init / status / client-review / hearing / phase / noubi / kyokun / role / mode / meeting / incident
-  - ※ 内部審査(ゲート)・変更管理(稟議)はユーザー操作のコマンドではなく、**司令塔(governance)が自動処理** する
-    (旧 gate / ringi / shonin コマンドは撤去済み)。
-    client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
+- **Slash Commands (4)**: init / status / hearing / client-review
+  - ※ お客様(発注者)が直接操作するのはこの4つだけ。**社内作業はすべて司令塔(governance)が自動実行** する:
+    内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・納品物整備・教訓登録。
+    (旧 gate / ringi / shonin / phase / meeting / noubi / kyokun / role / mode コマンドは撤去済み)
+  - client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
 - **Skills (7)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
 - **Hooks (5)**: PreToolUse 4種 (phase_guard / role_guard / ringi_guard / incident_guard) + UserPromptSubmit 1種 (superior_visit)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
@@ -164,10 +165,8 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── jtbc-shunin.md   (主任)
     │   ├── jtbc-tantou.md   (担当)
     │   └── jtbc-ses.md      (外注SES / model: haiku)
-    ├── commands/
-    │   ├── init.md    status.md  client-review.md
-    │   ├── hearing.md phase.md   noubi.md  kyokun.md
-    │   ├── role.md    mode.md    meeting.md incident.md
+    ├── commands/         ← お客様が直接使う4つのみ(社内作業は governance が自動実行)
+    │   └── init.md    status.md  hearing.md  client-review.md
     ├── skills/
     │   ├── governance/SKILL.md
     │   ├── document-writer/SKILL.md
@@ -231,10 +230,10 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
    │ ② 客先提示(自動)detailed_design … 内部承認済みの詳細設計書をお客様へ提示・ご承認で次へ
    ▼
  実装 (IMPLEMENTATION)
-   │ /jtbc:phase next         … 主任が完了確認 (審査会なし)
+   │ 工程内遷移(自動)       … 主任が完了確認したら司令塔が自動で進める (審査会なし)
    ▼
  単体テスト (UNIT_TEST)
-   │ /jtbc:phase next
+   │ 工程内遷移(自動)
    ▼
  総合テスト (INTEGRATION_TEST)
    │ 内部審査(自動)release     … 課長◎ 主任○ 部長○ 社長○ (リリース判定会)
@@ -311,7 +310,7 @@ APPROVED で `pending/ → approved/` へ移動。経路を飛ばした承認は
 ### 5.4 主任 (jtbc-shunin) — `tools: Read, Write, Edit, Grep, Glob, Bash`
 - **プロジェクトリーダー/テックリード**。詳細設計・WBS・テスト計画・影響範囲分析
 - 担当・外注SESへの **業務分担をコントロール・割り振り**。**自分でも実装可能**
-- 内部定例のファシリ。実装系工程の進行(`/jtbc:phase next`)
+- 内部定例のファシリ。実装系工程の進行(完了確認で司令塔が自動遷移)
 
 ### 5.5 担当 (jtbc-tantou) — `tools: Read, Write, Edit, Grep, Glob, Bash`
 - 課長・主任の指示のもと、特定WBSタスクの実装・テスト・雑用
@@ -394,7 +393,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 - **客先レビューのご指摘時**: 成果物を修正し、当該ゲートの内部承認(`approvals`)をクリア。再度 内部審査(自動)→ 客先提示(自動)の順。
 - **根回し**: 審査会の前に、owner(課長/主任)が承認者へ事前説明し論点を潰す(任意・推奨)
 - **承認印**: 承認は 🔴 のハンコ表現で文書へ押印する
-- **工程内遷移**: 実装→単体→総合テストはゲート無し。主任が `/jtbc:phase next` で進める
+- **工程内遷移**: 実装→単体→総合テストはゲート無し。主任が完了確認したら司令塔が自動で進める
 - hook(`phase_guard.py`)が、実装系フェーズ以外での `src/` 書込みを阻止する
 - **承認の正本と機械チェック(C-3)**: 承認の正本は `state.json#approvals["<gate>_gate"]`。gate 記録 `.jtbc/gates/<gate>_gate.md` は参照用。phase を `next_phase` へ進める前に `modes/jtbc.yaml#gates[<gate>].approvers` の全員が `approved` かを機械チェックし、1人でも未承認なら遷移しない(ハンコの実効化)
 - **No-Go 時の処理(A-3)**: ゲート否決(No-Go)の場合は phase を `previous_phase`(審査前のフェーズ)に戻し、`active_gate=null` として差し戻し理由を gate 記録 .md に残す
@@ -403,7 +402,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ## 9. 会議体
 
-伝統的大企業らしく、会議がプロセスに組み込まれている(`meetings` skill / `/jtbc:meeting`)。
+伝統的大企業らしく、会議がプロセスに組み込まれている(`meetings` skill。司令塔が自動開催)。
 すべて議事録を残す。
 
 ### 9.1 定例 (recurring)
@@ -432,7 +431,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ## 10. インシデント対応
 
-社内規程違反・作業中の事故を検知したら発動(`incident-response` skill / `/jtbc:incident`)。
+社内規程違反・作業中の事故を検知したら発動(`incident-response` skill。お客様の申告/検知を起点に司令塔が自動起動)。
 
 ```
 検知 → ① ユーザーへ緊急一報 → ② 封じ込め → ③ 定期状況報告(部長/課長)
@@ -488,7 +487,8 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 ## 13. Company Mode
 
 本プラグインは **JTBC 専用**(かつての startup モードは廃止)。
-`modes/jtbc.yaml` が唯一の実体。mode 切替(set)は無く、`/jtbc:mode get|list` で確認のみ。
+`modes/jtbc.yaml` が唯一の実体。mode 切替(set)は無く、`state.json#mode` に常に `"jtbc"` を保持する
+(かつての `/jtbc:mode` 確認コマンドは撤去。情報は本ドキュメント参照)。
 
 将来の拡張余地(未実装): `agile`(PO/SM/Dev)、`oss`(maintainer/contributor/reviewer)、`gov`(統括/設計/実装/監査)。
 mode yaml と対応する役職 agent を追加すれば新文化を足せるアーキテクチャは残してある。
@@ -527,13 +527,13 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 4. 課長が要件定義書・計画書を作成 → (自動)PJ計画審査 → (自動)客先提示でお客様承認
 5. 課長が基本設計 → (自動)基本設計審査 → (自動)客先提示でお客様承認
 6. 主任が詳細設計・WBS・テスト計画 → (自動)詳細設計審査 → (自動)客先提示でお客様承認
-7. 主任が担当/外注SESへタスクを割り振り、実装
-8. /jtbc:phase next で 実装→単体テスト→総合テスト と進む
+7. 主任が担当/外注SESへタスクを割り振り、実装(役職振り分けは司令塔が自動)
+8. (自動)工程内遷移で 実装→単体テスト→総合テスト と進む(主任の完了確認を起点に司令塔が自動遷移)
 9. 実装中に要件変更ニーズ発覚 → (自動)変更管理(稟議)を起票し 主任→課長→部長→社長 が自動承認 → 結果をご報告
-10. 作業中の事故発生 → /jtbc:incident open → 緊急報告 → なぜなぜ分析 → 障害報告書 → close
-11. 定例を開催 → /jtbc:meeting internal / client / status
-12. (自動)リリース判定会
-13. /jtbc:kyokun add で教訓を3件追加
+10. 作業中の事故発生 → (自動)インシデント対応(緊急報告 → なぜなぜ分析 → 障害報告書 → 収束)
+11. (自動)会議体を開催(内部定例 / 客先定例 / 状況報告)
+12. (自動)リリース判定会(納品一覧を自動整備のうえ判定)
+13. (自動)教訓を3件登録(なぜなぜ由来)
 14. (自動)PJ完了審査 → 完了
 ```
 
