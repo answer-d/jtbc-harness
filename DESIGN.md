@@ -21,6 +21,8 @@ JTBCでは意図的に **権限分離(Tool Restriction)** と **知識分離(Con
 そしてもう一つの柱が **接遇** である。本プラグインを使うユーザーは「JTBCにシステム開発を発注したお客様」であり、応答は受注ベンダーの窓口のような丁重な敬語で行われる。
 JTBCの本質は "制約による品質保証" と "様式による信頼醸成" にある。Claude Code の subagent / hook / skill / command を組み合わせて実装する。
 
+役職は **常駐エージェントチーム(Agent Teams)** として運用する。司令塔(=営業)が **lead**、6役職が **teammate** として独立コンテキストを持ち、記憶と一貫性を保って報連相する。`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` が無効な環境では、同じ役職定義を **都度起動のサブエージェント** として使うフォールバックで動く(常駐による記憶継続のみ失われ、ガバナンスは同一)。詳細は §1.4。
+
 ---
 
 ## 1. 全体アーキテクチャ
@@ -72,7 +74,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 
 | 要素 | 役割 | 実装 |
 |---|---|---|
-| **Subagents (6)** | 役職ごとの人格・ツール制約 | `agents/*.md` (tools: 指定) |
+| **Teammates / Subagents (6)** | 役職ごとの人格・ツール制約。teams 有効環境では常駐 teammate、無効環境ではサブエージェントとして同一定義を再利用 | `agents/*.md` (tools: 指定) |
 | **Slash Commands (14)** | ユーザー操作の入口 | `commands/*.md` |
 | **Skills (7)** | ガバナンス制御・接遇・要望ヒアリング・会議・インシデント・なぜなぜ・雛形挿入 | `skills/*/SKILL.md` |
 | **Hooks (5)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制 / ユーザー入力時の上長視察注入 | `hooks/hooks.json` + `*.py` |
@@ -104,6 +106,31 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 }
 ```
 
+### 1.4 役職の運用: 常駐エージェントチーム (Agent Teams)
+
+役職は **常駐 teammate** として運用する。これにより役職が記憶と一貫性を保ち、組織的開発・報連相が
+実体を持つ(従来の「都度コールドスタートのサブエージェント」では役職が毎回記憶ゼロだった)。
+
+- **lead = 司令塔(営業)**: メインセッションがチームの lead(生涯固定)。お客様との逐次対話を務め、
+  6役職の spawn とオーケストレーションを担う。客対の発話主体は常に lead。
+- **teammates = 6役職**: 社長/部長/課長/主任/担当/SES を、`agents/jtbc-*.md` の定義名を指定して
+  teammate として spawn。teammate は定義の `tools`/`model`(SES=haiku)/人格を継承する。
+- **遅延常駐**: 出番が来た役職をその時点で spawn し、PJ 完了まで生かし続ける。提案期は課長・部長のみ、
+  後工程で主任・担当・SES・社長が順次 join。
+- **報連相 = mailbox**: teammate 同士は直接メッセージできるが、あて先は原則 **直上・直下** に限る
+  (社長⇄部長⇄課長⇄主任⇄担当→SES)。lead が系統飛ばしを是正。
+- **入れ子チーム禁止**: teammate は部下を spawn できない。6役職すべて lead が spawn する
+  (階層は spawn 木ではなくメッセージ規律で表現)。
+- **物理ガバナンスは無改修で有効**: teammate は別インスタンスだが、PreToolUse payload に
+  `agent_type`(= frontmatter name, 例 `jtbc-kacho`)が乗り、`role_guard` 等の exit 2 ブロックも届く
+  (実機確認済み)。**チーム化してもガバナンスの効き方は変わらない**。
+- **フォールバック**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 無効時は、同じ役職定義を `Agent` ツールの
+  都度起動(一発実行)で使う。常駐による記憶継続のみ失われ、起案/承認/振り分け/ガバナンスは同一。
+- **寿命**: teammate はセッション内のみ。`/resume` では復元されないため、再開時に lead が現 phase に
+  応じて必要役職を再 spawn する。
+
+実行ロジックの正本は `skills/governance/SKILL.md`「役職の運用」。
+
 ---
 
 ## 2. Claude Code Plugin 構成案
@@ -124,7 +151,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 
 ### 2.2 Plugin が提供するもの
 
-- **Subagents (6)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES
+- **Teammates / Subagents (6)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES(teams 有効時は常駐 teammate、無効時はサブエージェント。定義は同一 `agents/jtbc-*.md`)
 - **Slash Commands (4)**: init / status / hearing / client-review
   - ※ お客様(発注者)が直接操作するのはこの4つだけ。**社内作業はすべて司令塔(governance)が自動実行** する:
     内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・納品物整備・教訓登録。
@@ -141,9 +168,9 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 
 1. プラグイン有効化時に `plugin.json` を読む
 2. ユーザー入力時に `governance` skill が dispatch を判断(接遇トーンを適用)
-3. role判定後、対応する subagent を起動
-4. subagent がツールを呼ぶたびに PreToolUse hook が `.jtbc/state.json` と照合
-5. 違反したら hook が exit 2 でツール実行を阻止
+3. role判定後、対応する役職を動かす(teams 有効時は常駐 teammate へ SendMessage / 初回は spawn。無効時はサブエージェントを都度起動)
+4. teammate / subagent がツールを呼ぶたびに PreToolUse hook が `agent_type` で役職を識別し `.jtbc/state.json` と照合
+5. 違反したら hook が exit 2 でツール実行を阻止(teammate にも届く)
 
 ---
 
@@ -561,6 +588,12 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 - **遅い**。本当に遅い。小さな変更にもプロセスが乗る(それが抑止力でもありコストでもある)
 - agentの「人格」が崩れることがある(hookで物理強制するが、プロンプトだけでは100%抑止不可)
 - **稟議疲れ・会議疲れ**。実プロジェクトでやると人間が滅入る(本物のJTBCがそうであるように)
+- **チーム(Agent Teams)は実験機能**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 依存で、`/resume` 非対応・
+  task status のラグ・shutdown が遅い等の既知の制約を抱える(research preview)。配布プラグインとして
+  teams を必須にせず、無効環境はサブエージェントへフォールバックする。split panes は tmux/iTerm2 が必要
+  (in-process はどの端末でも可)。
+- **チームのコスト**: 6役職常駐は各々が別インスタンス=別コンテキストで、トークン消費が大きい。
+  遅延常駐(出番が来た役職だけ起こす)で緩和するが、本質的に重い。
 - **Read制御の限界(B-2)**: PreToolUse の matcher は Edit / Write / MultiEdit のみ。**ファイル読み取り(Read/Grep/Glob)は hook で制御できない**ため、社長の src 閲覧や外注SES のガバナンス文書閲覧はプロンプト規範に依存する(物理強制は書込み系のみ)
 
 逆に言えば、この「遅さ」「重さ」「様式」こそが暴走への抑止力であり、AIエージェントに対する **意図的なフリクション** である。
