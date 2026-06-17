@@ -16,9 +16,52 @@ ringi_guard.py — JTBC PreToolUse hook
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
+
+
+def resolve_agent_role(payload: dict) -> str | None:
+    """PreToolUse ペイロードから役職スラッグ (例 "jtbc-kacho") を解決する。
+
+    Claude Code は subagent 実行時、frontmatter の name を payload.agent_type に
+    渡す。ただしプラグイン提供の agent は名前空間付き (例 "jtbc:jtbc-kacho") で
+    渡る場合があるため、最後の ':' 以降を採用して接頭辞を剥がす。
+    旧 agent_name/subagent_name は後方互換で残す。
+    司令塔(メインセッション)からの書込みは agent_type を持たず None を返す。
+    """
+    raw = (
+        payload.get("agent_type")
+        or payload.get("agent_name")
+        or payload.get("subagent_name")
+    )
+    if not raw:
+        return None
+    return str(raw).split(":")[-1].strip() or None
+
+
+def _debug_payload(payload: dict) -> None:
+    """JTBC_HOOK_DEBUG が設定されている時のみ、実ペイロードを記録する(調査用)。"""
+    if not os.environ.get("JTBC_HOOK_DEBUG"):
+        return
+    try:
+        cwd = Path(payload.get("cwd", "."))
+        log = cwd / ".jtbc" / "hook_debug.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        with log.open("a") as f:
+            f.write(json.dumps({
+                "hook": "ringi_guard",
+                "keys": sorted(payload.keys()),
+                "agent_type": payload.get("agent_type"),
+                "agent_id": payload.get("agent_id"),
+                "resolved_role": resolve_agent_role(payload),
+                "tool_name": payload.get("tool_name"),
+                "file_path": (payload.get("tool_input") or {}).get("file_path"),
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
 
 # cr_type: (path_pattern, 初版作成フェーズ, 初版作成を許す起案者役職)
 DOC_PATTERNS = {
@@ -38,15 +81,11 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
 
+    _debug_payload(payload)
+
     tool_input = payload.get("tool_input", {})
     file_path = tool_input.get("file_path") or tool_input.get("path")
-    # Claude Code は subagent 実行時、frontmatter の name を payload.agent_type に渡す
-    # (例: "jtbc-kacho")。旧 agent_name/subagent_name は存在しないため後方互換で残す。
-    agent_name = (
-        payload.get("agent_type")
-        or payload.get("agent_name")
-        or payload.get("subagent_name")
-    )
+    agent_name = resolve_agent_role(payload)
     cwd = Path(payload.get("cwd", "."))
     if not file_path:
         return 0

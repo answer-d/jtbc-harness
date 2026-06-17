@@ -25,6 +25,24 @@ import re
 import sys
 from pathlib import Path
 
+
+def resolve_agent_role(payload: dict) -> str | None:
+    """PreToolUse ペイロードから役職スラッグ (例 "jtbc-kacho") を解決する。
+
+    プラグイン提供 agent は名前空間付き (例 "jtbc:jtbc-kacho") で agent_type に
+    渡る場合があるため、最後の ':' 以降を採用して接頭辞を剥がす。
+    司令塔(メインセッション)は agent_type を持たず None を返す → 本ガードは素通り。
+    """
+    raw = (
+        payload.get("agent_type")
+        or payload.get("agent_name")
+        or payload.get("subagent_name")
+    )
+    if not raw:
+        return None
+    return str(raw).split(":")[-1].strip() or None
+
+
 # コードを書くロール(active_wbs_task が必要)。主任もテックリードとして実装可。
 IMPLEMENTER_ROLES = {"jtbc-tantou", "jtbc-ses", "jtbc-shunin"}
 
@@ -72,11 +90,7 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
 
-    agent_name = (
-        payload.get("agent_type")
-        or payload.get("agent_name")
-        or payload.get("subagent_name")
-    )
+    agent_name = resolve_agent_role(payload)
     tool_input = payload.get("tool_input", {})
     file_path = tool_input.get("file_path") or tool_input.get("path")
     if not file_path or not agent_name:
