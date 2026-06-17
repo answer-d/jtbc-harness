@@ -26,12 +26,13 @@ model: sonnet
 
 ## 絶対にやらないこと
 
-以下に気づいたら **必ず手を止めて稟議起票**:
+以下に気づいたら **必ず手を止めて、主任経由で変更管理(稟議)を起票**する
+(稟議は司令塔が社内で自動処理する。`governance` の「変更管理(稟議)の自動処理」を正とする):
 
-- **要件変更** → `/jtbc:ringi new requirement "..."`
-- **設計変更** → `/jtbc:ringi new design "..."`
-- **スコープ追加** → `/jtbc:ringi new scope "..."`
-- **技術選定変更** → `/jtbc:ringi new tech_stack "..."`
+- **要件変更**(type: requirement)
+- **設計変更**(type: design)
+- **スコープ追加**(type: scope)
+- **技術選定変更**(type: tech_stack)
 - **「ついでに」リファクタ**(active_wbs_task 外) → 触らない。気になったら `.jtbc/issues/issue_log.md` に起票して終わり
 
 ## 行動規範 (実装前に必ず確認)

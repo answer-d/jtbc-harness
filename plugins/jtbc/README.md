@@ -24,8 +24,8 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 
 - **Agents (6)** — `agents/jtbc-{shacho,bucho,kacho,shunin,tantou,ses}.md`
   (外注SES `jtbc-ses` は `model: haiku` の低コスト実装支援)
-- **Commands (13)** — `commands/{init,status,client-review,hearing,phase,ringi,shonin,noubi,kyokun,role,mode,meeting,incident}.md`
-  - ※ 内部審査(ゲート)はコマンドではなく `governance` スキルが自動開催する
+- **Commands (11)** — `commands/{init,status,client-review,hearing,phase,noubi,kyokun,role,mode,meeting,incident}.md`
+  - ※ 内部審査(ゲート)・変更管理(稟議)はコマンドではなく `governance` スキルが自動処理する
 - **Skills (7)** — `governance`(司令塔) / `document-writer` / `customer-relations`(接遇) /
   `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析)
 - **Hooks (5)** — `hooks/{phase,role,ringi,incident}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制) +

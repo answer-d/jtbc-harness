@@ -99,10 +99,8 @@ def main() -> int:
                     return 0
             print(
                 f"[ringi_guard] BLOCKED: '{relative}' の変更には稟議承認が必要です。\n"
-                f"以下を試してください:\n"
-                f"  1) /jtbc:ringi new {cr_type.split('_')[0]} \"<変更概要>\"\n"
-                f"  2) /jtbc:ringi submit CR-NNN\n"
-                f"  3) 主任→課長→部長 で /jtbc:shonin <role> CR-NNN approve\n"
+                f"変更管理(稟議)は司令塔が社内で自動処理します(governance スキル)。\n"
+                f"  起票({cr_type.split('_')[0]}) → 承認パスで各役職が押印 → APPROVED → 反映\n"
                 f"全承認後にこのファイル更新を再試行してください。",
                 file=sys.stderr,
             )
