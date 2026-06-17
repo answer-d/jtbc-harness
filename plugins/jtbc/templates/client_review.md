@@ -11,7 +11,7 @@ status: PENDING | APPROVED | REVISION_REQUESTED
 # 客先レビュー記録
 
 <!--
-- 作成者: 課長 (jtbc-kacho / お客様窓口)
+- 進行: 営業 (客対窓口=メインセッション) / 記録作成: 課長 (jtbc-kacho)
 - 目的: 社内審査会(ゲート)で内部承認を得た成果物を、お客様へご提示(ご査収)し、確認・ご承認を賜る
 - トーン: お客様向けの記録のため、丁重な敬語で記す (customer-relations)
 - 対象ゲート: 提案審査 / PJ計画審査 / 基本設計審査 / 詳細設計審査 の内部承認後
@@ -23,12 +23,12 @@ status: PENDING | APPROVED | REVISION_REQUESTED
 - 対象ゲート: <proposal | project_plan | basic_design | detailed_design>(内部承認済み)
 - ご提示資料(パス): <例) .jtbc/proposal/proposal.md / .jtbc/requirements/requirements.md 等>
 - 日時: 
-- 弊社出席者: 課長(窓口)〔重要局面では部長も同席〕
+- 弊社出席者: 営業(窓口)/ 課長(PM・同席)〔重要局面では部長も同席〕
 - お客様: {{client_name}} 御中
 
 ## 1. ご説明の要点
 
-<!-- 課長がお客様に分かる言葉で成果物の要点をご説明した内容を記す -->
+<!-- 営業がお客様に分かる言葉で成果物の要点をご説明した内容を記す(技術詳細は同席の課長が補足) -->
 
 - 
 - 
