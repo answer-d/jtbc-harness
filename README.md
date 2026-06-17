@@ -53,7 +53,8 @@
 - **インシデント対応** — お客様の申告/検知を起点に司令塔が **自動起動**(緊急報告 → 定期報告 → なぜなぜ分析 → 障害報告書)
 - **工程内遷移・納品物整備・教訓登録・役職振り分け** — いずれも司令塔が **自動実行**(お客様は操作しない)
 - **顧客接遇** — 受注御礼・進捗報告・お詫びを丁重な敬語で
-- **権限分離フック** — phase_guard / role_guard / ringi_guard が違反を物理的に阻止
+- **エージェントチーム(常駐役職)** — 6役職を常駐 teammate として運用し、記憶・一貫性・報連相を実体化(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`。無効時はサブエージェントへフォールバック)
+- **権限分離フック** — phase_guard / role_guard / ringi_guard が違反を物理的に阻止(常駐 teammate にも `agent_type` 経由で有効)
 
 ## クイックスタート
 
@@ -71,6 +72,24 @@
 mkdir -p ~/.claude/plugins
 ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 ```
+
+### C. エージェントチーム(常駐役職)を有効化【推奨】
+
+役職を **常駐エージェントチーム** として動かすと、各役職が記憶と一貫性を保ち、報連相が実体を持ちます。
+`settings.json` に実験フラグを追加してください(未設定でも動きますが、その場合は役職が都度起動の
+サブエージェントになり、記憶は継続しません)。
+
+```json
+// ~/.claude/settings.json
+{
+  "env": { "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1" }
+}
+```
+
+- **端末要件**: 既定の in-process モードはどの端末でも動作。各役職を別ペインで見たい場合のみ
+  tmux または iTerm2 が必要(`teammateMode` 設定 / `claude --teammate-mode`)。
+- **既知の制約(research preview)**: `/resume` でチームは復元されない(再開時に司令塔が役職を再 spawn)。
+  6役職常駐はトークン消費が大きい(出番が来た役職だけ起こす遅延常駐で緩和)。
 
 ### 使い始め
 

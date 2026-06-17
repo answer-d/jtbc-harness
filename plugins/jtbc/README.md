@@ -24,9 +24,13 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 
 - **Agents (6)** — `agents/jtbc-{shacho,bucho,kacho,shunin,tantou,ses}.md`
   (外注SES `jtbc-ses` は `model: haiku` の低コスト実装支援)
-  - ※ **客対の一次窓口は「営業」= メインセッション(司令塔)の客対人格** で、サブエージェントではない
-    (お客様との逐次対話はサブエージェント化できないため)。営業は開発組織の外側に立ち、承認権限を持たない。
-    重要局面では営業が課長(PM)・部長(責任者)を同席紹介する。定義は `config/jtbc.yaml#customer_window`。
+  - ※ **運用は常駐エージェントチーム(Agent Teams)が基本**。司令塔(営業)が lead、6役職が常駐 teammate。
+    `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` を `settings.json` に設定して有効化する(無効なら都度起動の
+    サブエージェントへ自動フォールバック)。詳細は `DESIGN.md §1.4` / `skills/governance/SKILL.md`。
+  - ※ **客対の一次窓口は「営業」= メインセッション(司令塔=lead)の客対人格** で、teammate ではない
+    (お客様との逐次対話は teammate に委譲できないため lead が務める)。営業は開発組織の外側に立ち、
+    承認権限を持たない。重要局面では営業が課長(PM)・部長(責任者)を同席紹介する。
+    定義は `config/jtbc.yaml#customer_window`。
   - ※ **承認は起案者(owner)より上位の役職のみ**(社長>部長>課長>主任>担当>SES)。下位役職は
     `reviewers`(事前レビュー・記載協力)として関与できるが承認印は押さない。詳細は `config/jtbc.yaml#gates`。
 - **Commands (4)** — `commands/{init,status,hearing,client-review}.md`(お客様が直接使うのはこの4つのみ)
