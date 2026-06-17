@@ -11,7 +11,7 @@
     {
       "name": "jtbc",
       "source": "./plugins/jtbc",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "description": "AIエージェント開発に日本の伝統的大企業の組織構造・承認プロセス・会議体・インシデント対応を導入する",
       "category": "workflow",
       "keywords": [

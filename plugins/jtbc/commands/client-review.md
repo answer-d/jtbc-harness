@@ -14,7 +14,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 > 上位承認を得てから提示します。
 > 流れ: ①課長が起案 → ②内部審査(自動・内部承認)→ ③客先提示(自動・ご承認)→ ④次フェーズへ
 
-定義は `modes/jtbc.yaml#gates[<gate>]`(`internal_approval_first: true`)、接遇トーンは
+定義は `config/jtbc.yaml#gates[<gate>]`(`internal_approval_first: true`)、接遇トーンは
 `customer-relations` を正とします。**お客様への応答は必ず丁重な敬語**で行ってください。
 
 ## 引数
@@ -35,7 +35,7 @@ argument-hint: "<proposal|project_plan|basic_design|detailed_design>"
 ### 1. 前提確認(内部承認が先)
 1. `.jtbc/state.json#phase` を読み、当該ゲートの `previous_phase` と一致するか確認
    - 違う場合は中止し、お客様へ現状を丁重にご案内する
-2. **内部承認チェック(最重要)**: `modes/jtbc.yaml#gates[<gate>].approvers` の **全員** が
+2. **内部承認チェック(最重要)**: `config/jtbc.yaml#gates[<gate>].approvers` の **全員** が
    `state.json#approvals["<gate>_gate"][<role>] == "approved"` であることを機械的に確認する
    - 未承認(=社内審査が未了)の場合は **中止**し、
      「お客様へご提示する前に、社内の内部審査(自動開催)で承認を得る必要があります」と内部向けに案内する
