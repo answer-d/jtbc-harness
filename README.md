@@ -97,7 +97,7 @@ jtbc-harness/
     ├── skills/      ← 制御/接遇/ヒアリング/会議/インシデント/なぜなぜ/雛形 (7)
     ├── hooks/       ← 権限分離・統制フック (5)
     ├── templates/   ← ドキュメント雛形 (17)
-    ├── modes/       ← jtbc.yaml (JTBC専用)
+    ├── config/      ← jtbc.yaml (組織設定の正本・JTBC専用)
     └── state/       ← state schema
 ```
 

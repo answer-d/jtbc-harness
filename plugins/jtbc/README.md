@@ -32,7 +32,7 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 - **Hooks (5)** — `hooks/{phase,role,ringi,incident}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制) +
   `hooks/superior_visit.py`(UserPromptSubmit で上長視察を確率注入)
 - **Templates (17)** — `templates/proposal.md` 〜 `completion_approval.md`, `incident_report.md`, `meeting_minutes.md`, `client_review.md`
-- **Modes (1)** — `modes/jtbc.yaml`(JTBC専用。startupモードは廃止)
+- **Config (1)** — `config/jtbc.yaml`(組織構造・フェーズ・ゲート・稟議・会議体・インシデントの正本。JTBC専用でモード切替はない)
 
 ## state.json schema
 
