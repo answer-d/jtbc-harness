@@ -167,7 +167,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 - **Hooks (7)**: PreToolUse 6種 (phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 1種 (superior_visit)
   - `team_guard`: teams 有効環境(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)で jtbc 役職を一発実行(`subagent_type` のみ・`run_in_background` 無し)で spawn しようとすると物理ブロックし、常駐 teammate 起動へ誘導(司令塔の「一発実行への退化」を物理担保。teams 無効環境では素通り)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
-  - `state_guard`: `.jtbc/state.json` の `phase` 変更を **PMO(`jtbc-pmo`)以外は物理ブロック**(フェーズ移行をPMOに限定。審査スキップを防ぐ最小ロック。approvals 等 phase 以外の更新は素通り)
+  - `state_guard`: `.jtbc/state.json` の `phase` 変更を **(A)権限: PMO(`jtbc-pmo`)以外は物理ブロック** + **(B)プロセス: 移行先ゲートの事前条件(ゲート承認者全員 approved・客先承認 APPROVED・必要書類が雛形でなく記入済み)を満たさなければ PMO であってもブロック**。審査スキップ・客先承認スキップ・空テンプレのまま前進を物理的に防ぐ(approvals 等 phase 以外の更新は素通り)
   - `superior_visit`: 各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率発火し文脈へ注入(COMPLETED・緊急対応中は発火しない)
 - **Templates (17)**: 提案書〜完了承認書 + 障害報告書 + 議事録 + 客先レビュー記録
 - **Modes (1)**: jtbc.yaml (JTBC専用)
