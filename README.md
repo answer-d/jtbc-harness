@@ -55,7 +55,8 @@
 - **工程内遷移・納品物整備・教訓登録・役職振り分け** — いずれも司令塔が **自動実行**(お客様は操作しない)
 - **顧客接遇** — 受注御礼・進捗報告・お詫びを丁重な敬語で
 - **エージェントチーム(常駐役職)** — 6役職を常駐 teammate として運用し、記憶・一貫性・報連相を実体化(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`。無効時はサブエージェントへフォールバック)
-- **権限分離フック** — phase_guard / role_guard / ringi_guard / state_guard が違反を物理的に阻止(常駐 teammate にも `agent_type` 経由で有効)
+- **権限分離フック** — phase_guard / role_guard / ringi_guard / state_guard / team_guard が違反を物理的に阻止(常駐 teammate にも `agent_type` 経由で有効)
+- **常駐チーム強制(team_guard)** — teams 有効環境で役職を一発実行(`subagent_type` のみ)で spawn しようとすると物理ブロックし、`run_in_background`+`name` の常駐 teammate 起動へ誘導(プロンプトでは止まらない退化を物理担保)
 - **PMO(プロセスの門番)** — フェーズ移行(`state.json#phase` 書換)を PMO に限定(`state_guard`)。受注後の計画整備(PJ計画書/リスク登録簿/WBS骨子)を実作業前に主導し、審査スキップ・空文書のまま前進する逸脱を防ぐ
 
 ## クイックスタート

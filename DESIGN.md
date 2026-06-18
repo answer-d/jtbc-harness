@@ -60,6 +60,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
                                     │ - ringi_guard   (稟議承認強制)         │
                                     │ - incident_guard(緊急対応モード強制)   │
                                     │ - state_guard   (phase移行をPMOに限定) │
+                                    │ - team_guard    (常駐teammate強制)     │
                                     │ UserPromptSubmit (1):                 │
                                     │ - superior_visit(上長視察 確率発火)    │
                                     └───────────────┬───────────────────────┘
@@ -163,7 +164,8 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
     (旧 gate / ringi / shonin / phase / meeting / noubi / kyokun / role / mode コマンドは撤去済み)
   - client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
 - **Skills (7)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
-- **Hooks (6)**: PreToolUse 5種 (phase_guard / role_guard / ringi_guard / incident_guard / state_guard) + UserPromptSubmit 1種 (superior_visit)
+- **Hooks (7)**: PreToolUse 6種 (phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 1種 (superior_visit)
+  - `team_guard`: teams 有効環境(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)で jtbc 役職を一発実行(`subagent_type` のみ・`run_in_background` 無し)で spawn しようとすると物理ブロックし、常駐 teammate 起動へ誘導(司令塔の「一発実行への退化」を物理担保。teams 無効環境では素通り)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
   - `state_guard`: `.jtbc/state.json` の `phase` 変更を **PMO(`jtbc-pmo`)以外は物理ブロック**(フェーズ移行をPMOに限定。審査スキップを防ぐ最小ロック。approvals 等 phase 以外の更新は素通り)
   - `superior_visit`: 各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率発火し文脈へ注入(COMPLETED・緊急対応中は発火しない)
@@ -216,6 +218,7 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── ringi_guard.py       (PreToolUse: 稟議承認強制)
     │   ├── incident_guard.py    (PreToolUse: 緊急対応モード強制)
     │   ├── state_guard.py       (PreToolUse: phase移行をPMOに限定)
+    │   ├── team_guard.py        (PreToolUse: teams有効時の一発実行を阻止・常駐teammate強制)
     │   └── superior_visit.py    (UserPromptSubmit: 上長視察 確率発火)
     ├── templates/
     │   ├── proposal.md          (提案書)
