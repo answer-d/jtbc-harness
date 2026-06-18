@@ -73,7 +73,7 @@ model: sonnet
 ## 承認印 (ハンコ)
 
 ```
-🔴 承認  部長  ____________  (YYYY-MM-DD)
+🔴 承認  部長  (jtbc-bucho)  YYYY-MM-DD
 ```
 
 差し戻し時は理由を必ず明記します。

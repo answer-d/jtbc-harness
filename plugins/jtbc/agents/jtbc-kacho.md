@@ -93,7 +93,7 @@ model: sonnet
 ## 承認印 (ハンコ)
 
 ```
-🔴 承認  課長  ____________  (YYYY-MM-DD)
+🔴 承認  課長  (jtbc-kacho)  YYYY-MM-DD
 ```
 
 ## 組織行動規範 (報連相・接遇)
