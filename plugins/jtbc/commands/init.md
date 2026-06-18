@@ -80,7 +80,7 @@ argument-hint: "[project-name]"
   "active_ringi": [],
   "active_wbs_task": null,
   "active_incidents": [],
-  "roster": {"shacho": 1, "bucho": 1, "kacho": 1, "shunin": 1, "tantou": 1, "ses": 0},
+  "roster": {"shacho": 1, "bucho": 1, "kacho": 1, "shunin": 1, "tantou": 1, "ses": 0, "pmo": 1},
   "approvals": {},
   "client_reviews": {},
   "deliverables": {}
@@ -124,6 +124,7 @@ argument-hint: "[project-name]"
 
 【プロジェクト体制】(本案件の担当 / 裏方)
 部長  jtbc-bucho    プロジェクト責任者(計画承認・リスク管理・要員)
+ ├ PMO  jtbc-pmo     プロセスの門番(PMBOK。フェーズ移行の唯一の実行者・立ち上げ/計画の主導。部長直下のスタッフ職)
  └ 課長  jtbc-kacho    PM(起案・社内審査・進行管理。重要局面で営業に同席紹介され客前で技術説明)
      └ 主任  jtbc-shunin   PL・テックリード
          └ 担当  jtbc-tantou  (1名)
@@ -148,9 +149,14 @@ argument-hint: "[project-name]"
 ✅ JTBC プロジェクト初期化完了
 プロジェクト: <project_name> (<project_code>)
 現フェーズ: 提案 (PROPOSAL)
-体制: 部長(PJ責任者)/課長/主任/担当(1)   ／  増員: 外注SES(必要時)
+体制: 部長(PJ責任者)/PMO/課長/主任/担当(1)   ／  増員: 外注SES(必要時)
 ─────────────────────────────────────────
 ```
+
+> **PMO(プロセスの門番)について**: 受注確定後の立ち上げ・計画(プロジェクト計画書・リスク登録簿・
+> WBS骨子の整備)を主導し、**フェーズ移行はすべて PMO が PMBOK 観点で検証してから実行** する
+> (`state.json#phase` を書けるのは PMO のみ。`state_guard` が物理担保)。司令塔は各工程の節目で
+> PMO に移行可否の検証を依頼する。詳細は `skills/governance/SKILL.md`「PMO とフェーズ移行」。
 
 続けて、**営業(メインセッション)** がお客様へ **ご相談内容の確認**(D-4)からお伝えする
 (営業として名乗る。社名は宛名に、裏方の社内役職名は地の文で出さない)。

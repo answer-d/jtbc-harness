@@ -54,11 +54,12 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
                                                  ▼        ▼
                                     ┌───────────────────────────────────────┐
                                     │ Hooks                                 │
-                                    │ PreToolUse (4):                       │
+                                    │ PreToolUse (5):                       │
                                     │ - phase_guard   (フェーズ強制)         │
                                     │ - role_guard    (権限分離)             │
                                     │ - ringi_guard   (稟議承認強制)         │
                                     │ - incident_guard(緊急対応モード強制)   │
+                                    │ - state_guard   (phase移行をPMOに限定) │
                                     │ UserPromptSubmit (1):                 │
                                     │ - superior_visit(上長視察 確率発火)    │
                                     └───────────────┬───────────────────────┘
@@ -74,10 +75,10 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 
 | 要素 | 役割 | 実装 |
 |---|---|---|
-| **Teammates / Subagents (6)** | 役職ごとの人格・ツール制約。teams 有効環境では常駐 teammate、無効環境ではサブエージェントとして同一定義を再利用 | `agents/*.md` (tools: 指定) |
+| **Teammates / Subagents (7)** | 6役職(社長〜SES)+ PMO(プロセスの門番)。teams 有効環境では常駐 teammate、無効環境ではサブエージェントとして同一定義を再利用 | `agents/*.md` (tools: 指定) |
 | **Slash Commands (14)** | ユーザー操作の入口 | `commands/*.md` |
 | **Skills (7)** | ガバナンス制御・接遇・要望ヒアリング・会議・インシデント・なぜなぜ・雛形挿入 | `skills/*/SKILL.md` |
-| **Hooks (5)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制 / ユーザー入力時の上長視察注入 | `hooks/hooks.json` + `*.py` |
+| **Hooks (6)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制・フェーズ移行のPMO限定 / ユーザー入力時の上長視察注入 | `hooks/hooks.json` + `*.py` |
 | **State** | プロジェクト現状 | `.jtbc/state.json` |
 | **Templates (17)** | ドキュメント雛形 | `templates/*.md` |
 | **Modes (1)** | 組織文化プロファイル (JTBC専用) | `modes/jtbc.yaml` |
@@ -155,15 +156,16 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 
 ### 2.2 Plugin が提供するもの
 
-- **Teammates / Subagents (6)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES(teams 有効時は常駐 teammate、無効時はサブエージェント。定義は同一 `agents/jtbc-*.md`)
+- **Teammates / Subagents (7)**: 社長 / 部長 / 課長 / 主任 / 担当 / 外注SES + **PMO**(プロセスの門番。フェーズ移行の唯一の実行者)。teams 有効時は常駐 teammate、無効時はサブエージェント。定義は同一 `agents/jtbc-*.md`
 - **Slash Commands (4)**: init / status / hearing / client-review
   - ※ お客様(発注者)が直接操作するのはこの4つだけ。**社内作業はすべて司令塔(governance)が自動実行** する:
     内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・納品物整備・教訓登録。
     (旧 gate / ringi / shonin / phase / meeting / noubi / kyokun / role / mode コマンドは撤去済み)
   - client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
 - **Skills (7)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
-- **Hooks (5)**: PreToolUse 4種 (phase_guard / role_guard / ringi_guard / incident_guard) + UserPromptSubmit 1種 (superior_visit)
+- **Hooks (6)**: PreToolUse 5種 (phase_guard / role_guard / ringi_guard / incident_guard / state_guard) + UserPromptSubmit 1種 (superior_visit)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
+  - `state_guard`: `.jtbc/state.json` の `phase` 変更を **PMO(`jtbc-pmo`)以外は物理ブロック**(フェーズ移行をPMOに限定。審査スキップを防ぐ最小ロック。approvals 等 phase 以外の更新は素通り)
   - `superior_visit`: 各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率発火し文脈へ注入(COMPLETED・緊急対応中は発火しない)
 - **Templates (17)**: 提案書〜完了承認書 + 障害報告書 + 議事録 + 客先レビュー記録
 - **Modes (1)**: jtbc.yaml (JTBC専用)
@@ -195,7 +197,8 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── jtbc-kacho.md    (課長)
     │   ├── jtbc-shunin.md   (主任)
     │   ├── jtbc-tantou.md   (担当)
-    │   └── jtbc-ses.md      (外注SES / model: haiku)
+    │   ├── jtbc-ses.md      (外注SES / model: haiku)
+    │   └── jtbc-pmo.md      (PMO / プロセスの門番)
     ├── commands/         ← お客様が直接使う4つのみ(社内作業は governance が自動実行)
     │   └── init.md    status.md  hearing.md  client-review.md
     ├── skills/
@@ -212,6 +215,7 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── role_guard.py        (PreToolUse: 権限分離)
     │   ├── ringi_guard.py       (PreToolUse: 稟議承認強制)
     │   ├── incident_guard.py    (PreToolUse: 緊急対応モード強制)
+    │   ├── state_guard.py       (PreToolUse: phase移行をPMOに限定)
     │   └── superior_visit.py    (UserPromptSubmit: 上長視察 確率発火)
     ├── templates/
     │   ├── proposal.md          (提案書)
@@ -354,6 +358,15 @@ APPROVED で `pending/ → approved/` へ移動。経路を飛ばした承認は
 - **常に課長以下の指示のもとで動く**。仕様が曖昧なら勝手に決めず必ず確認
 - ガバナンス文書には一切触れない(コードとテストのみ)
 
+### 5.7 PMO (jtbc-pmo) — `tools: Read, Write, Edit, Grep, Glob`
+- **プロセスの門番**。ライン職(社長〜SES)とは直交する **部長直下のスタッフ職**(PMBOK)
+- **フェーズ移行(`state.json#phase` の書き換え)を行える唯一の役職**。ゲート承認の充足・必要書類の
+  整備・客先承認・方針(バッファ20%/教訓3件等)を機械検証してから工程を進める(`state_guard` が物理担保)
+- **受注後の立ち上げ・計画を主導**: プロジェクト計画書・リスク登録簿・WBS骨子を **実作業の前に** 整える
+  (「雛形だけ置いて中身は後で」を許さない)。リスク/課題/スケジュールを継続監視
+- **成果物の品質承認(🔴 押印)はしない**(品質承認はゲート承認者=部長/社長)。PMO が見るのはプロセス適合
+- 提案/要件/設計の起案・改訂はしない(課長/主任の領域)。コードも書かない
+
 ---
 
 ## 6. 各ドキュメントのテンプレート
@@ -421,6 +434,10 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
   **内部承認前の文書をお客様に出してはならない。ユーザーに審査を操作させない。**
 - **phase 遷移の所在**: `internal_approval_first` のゲートでは内部審査は phase を進めず(`previous_phase` のまま据え置き)、
   **客先提示のご承認(APPROVED)で `next_phase` へ進む**。`release`/`completion` は内部審査の承認で直接進む。
+- **【重要】phase 遷移の実行者は PMO**: `state.json#phase` を書けるのは **PMO(`jtbc-pmo`)のみ**(`state_guard` が物理担保)。
+  PMO が「承認の充足・必要書類の整備・客先承認・方針適合」を PMBOK 観点で検証してから phase を更新する。
+  特に **project_plan ゲートは計画書・要件定義書・リスク登録簿が実内容で埋まっていること** を PMO が確認し、
+  受注後の計画整備を飛ばして基本設計へ進む逸脱を防ぐ。司令塔/課長は phase を進められない。
 - **客先レビューのご指摘時**: 成果物を修正し、当該ゲートの内部承認(`approvals`)をクリア。再度 内部審査(自動)→ 客先提示(自動)の順。
 - **根回し**: 審査会の前に、owner(課長/主任)が承認者へ事前説明し論点を潰す(任意・推奨)
 - **承認印**: 承認は 🔴 のハンコ表現で文書へ押印する
@@ -470,7 +487,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
      → ⑥ 障害報告書をユーザーへ提出 → ⑦ 教訓登録 + クローズ
 ```
 
-- **社内規程(抜粋)**: RULE-01 WBS外編集禁止 / RULE-02 稟議なし要件設計変更禁止 / RULE-03 ゲート未通過実装禁止 / RULE-04 承認経路飛ばし禁止 / RULE-05 テスト未済リリース禁止 / RULE-06 役職権限逸脱禁止 / RULE-07 SESへの無断機密領域アクセス禁止
+- **社内規程(抜粋)**: RULE-01 WBS外編集禁止 / RULE-02 稟議なし要件設計変更禁止 / RULE-03 ゲート未通過実装禁止 / RULE-04 承認経路飛ばし禁止 / RULE-05 テスト未済リリース禁止 / RULE-06 役職権限逸脱禁止 / RULE-07 SESへの無断機密領域アクセス禁止 / RULE-08 PMO以外のフェーズ移行(state.json#phase書換)禁止
 - severity が high/critical なら部長(+社長)が前に出てお詫び
 - 根本原因は **なぜなぜ分析(5 Whys)** で究明し、対策は 仕組み > 手順 > 教育 の順
 - `state.json#active_incidents` が空でない間は緊急対応モード
@@ -544,18 +561,22 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 
 ### 含むもの (実装済)
 - plugin.json / marketplace.json
-- 6 agents / 13 commands / 7 skills / 5 hooks(本実装) / 17 templates / 1 mode / state schema
+- 7 agents(6役職 + PMO)/ 13 commands / 7 skills / 6 hooks(本実装) / 17 templates / 1 mode / state schema
 
 ### 検収シナリオ (MVPが「動いた」と言える基準)
 
 ```
 1. /jtbc:init で 依頼内容を確認(無ければ狙いを仮定せず1問伺う)→ .jtbc/ 一式 + 体制図が生成される(受注御礼はまだ述べない)
-2. 課長が要望を1問ずつ引き出す → 共通理解を得て提案書を起案
+2. 課長がヒアリング項目(決定木)を起案 → 営業がそれを1問ずつ代弁して引き出す → 共通理解を得て課長が提案書を起案
    (費用=トークン数 / 期間=往復回数 で見積る。架空の万円・週は使わない)
-3. (自動)提案審査で 課長→部長→社長 が内部承認(=上位承認)→ (自動)客先提示で
-   内部承認済みの提案書を「ご査収ください」と提示 → お客様ご承認(=受注御礼)で要件定義へ
+3. (自動)提案審査で 部長→社長 が内部承認(=上位承認)→ (自動)客先提示で
+   内部承認済みの提案書を「ご査収ください」と提示 → お客様ご承認 → **受注御礼(フル定型)** で
+   PMO が要件定義へ phase を進める
    ※ お客様は審査を操作しない。審査は自動開催され、承認依頼だけがお客様へ上がる
-4. 課長が要件定義書・計画書を作成 → (自動)PJ計画審査 → (自動)客先提示でお客様承認
+3.5 (受注後キックオフ)PMO を spawn → 実作業の前に プロジェクト計画書・リスク登録簿・WBS骨子を整備
+   (空のまま先へ進まない。PMBOK 的な立ち上げ・計画)
+4. 課長が要件定義書、PMO/課長が計画書・リスク登録簿を作成 → (自動)PJ計画審査(計画書+要件+リスクが必須)→
+   (自動)客先提示でお客様承認 → PMO が基本設計へ phase を進める
 5. 課長が基本設計 → (自動)基本設計審査 → (自動)客先提示でお客様承認
 6. 主任が詳細設計・WBS・テスト計画 → (自動)詳細設計審査 → (自動)客先提示でお客様承認
 7. 主任が担当/外注SESへタスクを割り振り、実装(役職振り分けは司令塔が自動)

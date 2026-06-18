@@ -27,6 +27,7 @@
 | 主任    | PL/テックリード            | 詳細設計・WBS・割り振り・実装       | プロジェクト承認・要件変更         |
 | 担当    | 実装担当                   | 実装・テスト・SESへの割り振り       | 要件/設計/スコープ変更             |
 | 外注SES | 低コスト実装支援(Haiku)    | 指示された実装・テスト              | ガバナンス文書・自律判断・会議参加 |
+| PMO     | プロセスの門番(PMBOK)      | **フェーズ移行(唯一)**・受注後の計画整備・リスク監視 | 成果物の品質承認(押印)・起案・コード編集 |
 
 ## 工程(フェーズ)
 
@@ -54,7 +55,8 @@
 - **工程内遷移・納品物整備・教訓登録・役職振り分け** — いずれも司令塔が **自動実行**(お客様は操作しない)
 - **顧客接遇** — 受注御礼・進捗報告・お詫びを丁重な敬語で
 - **エージェントチーム(常駐役職)** — 6役職を常駐 teammate として運用し、記憶・一貫性・報連相を実体化(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`。無効時はサブエージェントへフォールバック)
-- **権限分離フック** — phase_guard / role_guard / ringi_guard が違反を物理的に阻止(常駐 teammate にも `agent_type` 経由で有効)
+- **権限分離フック** — phase_guard / role_guard / ringi_guard / state_guard が違反を物理的に阻止(常駐 teammate にも `agent_type` 経由で有効)
+- **PMO(プロセスの門番)** — フェーズ移行(`state.json#phase` 書換)を PMO に限定(`state_guard`)。受注後の計画整備(PJ計画書/リスク登録簿/WBS骨子)を実作業前に主導し、審査スキップ・空文書のまま前進する逸脱を防ぐ
 
 ## クイックスタート
 
@@ -115,10 +117,10 @@ jtbc-harness/
 ├── .claude-plugin/marketplace.json   ← Marketplace 配布定義
 └── plugins/jtbc/
     ├── .claude-plugin/plugin.json
-    ├── agents/      ← 役職定義 (6: 社長/部長/課長/主任/担当/外注SES)
+    ├── agents/      ← 役職定義 (7: 社長/部長/課長/主任/担当/外注SES/PMO)
     ├── commands/    ← slash commands (4: init/status/hearing/client-review。社内作業はgovernanceが自動実行)
     ├── skills/      ← 制御/接遇/ヒアリング/会議/インシデント/なぜなぜ/雛形 (7)
-    ├── hooks/       ← 権限分離・統制フック (5)
+    ├── hooks/       ← 権限分離・統制フック (6)
     ├── templates/   ← ドキュメント雛形 (17)
     ├── config/      ← jtbc.yaml (組織設定の正本・JTBC専用)
     └── state/       ← state schema

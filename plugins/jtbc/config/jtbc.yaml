@@ -14,6 +14,19 @@ roles:
   - tantou   # 担当
   - ses      # 外注SES (低コストモデル)
 
+# PMO(プロジェクトマネジメントオフィス)はライン職(roles の上下関係)とは直交する
+# プロセス職。部長直下のスタッフ機能として、PMBOK に沿ったプロセス適合を監督する。
+# - **フェーズ移行(state.json#phase の書き換え)を行える唯一の役職**。ゲート承認の充足・
+#   必要書類の整備・客先承認を機械検証してから工程を進める(state_guard.py が物理担保)。
+# - 受注後の立ち上げ・計画(プロジェクト計画書/リスク登録簿/WBS骨子)を主導する。
+# - **成果物の品質承認(押印)はしない**(それはゲート承認者=部長/社長の責務)。プロセスのみ見る。
+process_office:
+  persona: pmo
+  agent: jtbc-pmo
+  reports_to: bucho            # 部長直下のスタッフ機能
+  phase_transition_authority: true   # state.json#phase を書けるのは PMO のみ(state_guard で強制)
+  quality_approval_authority: false  # 成果物の品質承認(🔴)はしない
+
 agent_name_map:
   shacho: jtbc-shacho
   bucho: jtbc-bucho
@@ -21,6 +34,7 @@ agent_name_map:
   shunin: jtbc-shunin
   tantou: jtbc-tantou
   ses: jtbc-ses
+  pmo: jtbc-pmo
 
 # 客対窓口(営業)。メインセッション(司令塔)がお客様に応対するときに名乗る人格。
 # - 開発組織(roles)の **外側** に立つ窓口。承認権限を持たず、ガバナンス文書も起案しない。
