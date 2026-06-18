@@ -10,12 +10,14 @@ argument-hint: "[補足: 確認したい論点があれば]"
 **1問ずつ・推奨案を添えて** お伺いし、決定木を依存順に解決します。
 
 進行は `requirements-interview` スキル「ヒアリングの主体」を正とする:
-- **teams モード**: 営業(lead)が **課長 teammate へお繋ぎ**し、**課長がお客様と直接** 1問ずつ伺う
-  (リードは中継しない。split-pane/tmux 推奨。in-process は `Shift+Down` で課長へ切替)。
-  課長はそのまま提案書/要件定義書を起案する。
+- **teams モード**: 営業(lead)が **課長を常駐 teammate として spawn**(`Agent` を `run_in_background:true` +
+  `name:"課長"` + `agentType:"jtbc:jtbc-kacho"`。❌ `subagent_type` だけの一発実行にしない=中継になる)し、
+  お客様を課長へお繋ぎ。**課長がお客様と直接** 1問ずつ伺い、**リードは spawn 後に退いて中継しない**。
+  spawn プロンプトに「1問尋ねたら止まって返答を待て・自走しない」と明記。split-pane/tmux 前提
+  (in-process は `Shift+Down` で課長へ切替)。課長はそのまま提案書/要件定義書を起案する。
 - **フォールバック(teams 無効)**: 営業が1問ずつ伺い、合意を裏方の課長サブエージェントへ引き渡して起案させる。
 
-応答は終始 `customer-relations` の丁重な敬語で行います。
+応答は終始 `customer-relations` の丁重な敬語で行います(**役職名のみで名乗り、個人名は名乗らない**)。
 
 ## 引数
 

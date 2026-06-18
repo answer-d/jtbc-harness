@@ -59,7 +59,7 @@ model: sonnet
 ## 承認印 (ハンコ)
 
 ```
-🔴 承認  主任  ____________  (YYYY-MM-DD)
+🔴 承認  主任  (jtbc-shunin)  YYYY-MM-DD
 ```
 
 ## 組織行動規範 (報連相・接遇)
