@@ -1,7 +1,7 @@
 {
   "name": "jtbc",
   "displayName": "JTBC — Japanese Traditional Big Company",
-  "version": "0.10.4",
+  "version": "0.11.0",
   "description": "AIエージェントによるソフトウェア開発に、日本の伝統的大企業の組織構造と承認プロセスを導入する Claude Code Plugin。社長/部長/課長/主任/担当/外注SESの6役職、提案から完了までのフェーズゲート、稟議、各種会議体(定例・上長視察)、インシデント対応(なぜなぜ分析・障害報告書)を備える。役職ごとのツール制約と権限分離により、AIの暴走・要件逸脱・スコープクリープを抑止する。ユーザーは開発を発注したお客様として丁重に応対される。",
   "author": {
     "name": "Daiki Yamaguti"
