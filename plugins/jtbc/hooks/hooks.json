@@ -23,6 +23,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/incident_guard.py",
             "description": "緊急対応中(active_incidents非空)に前進系ガバナンス文書の編集を阻止"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/state_guard.py",
+            "description": "フェーズ移行(state.json#phaseの変更)をPMO役職に限定"
           }
         ]
       }

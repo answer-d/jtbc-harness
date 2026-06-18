@@ -22,9 +22,12 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 
 ## 提供物
 
-- **Agents (6)** — `agents/jtbc-{shacho,bucho,kacho,shunin,tantou,ses}.md`
+- **Agents (7)** — `agents/jtbc-{shacho,bucho,kacho,shunin,tantou,ses,pmo}.md`
   (外注SES `jtbc-ses` は `model: haiku` の低コスト実装支援)
-  - ※ **運用は常駐エージェントチーム(Agent Teams)が基本**。司令塔(営業)が lead、6役職が常駐 teammate。
+  - ※ **PMO `jtbc-pmo` はプロセスの門番**(PMBOK)。**フェーズ移行(`state.json#phase` 書換)を行える唯一の役職**で、
+    ゲート承認・必要書類・客先承認を機械検証してから工程を進める(`state_guard` が物理担保)。受注後の
+    立ち上げ・計画(PJ計画書/リスク登録簿/WBS骨子)を実作業前に主導する。成果物の品質承認(押印)はしない。
+  - ※ **運用は常駐エージェントチーム(Agent Teams)が基本**。司令塔(営業)が lead、各役職が常駐 teammate。
     `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` を `settings.json` に設定して有効化する(無効なら都度起動の
     サブエージェントへ自動フォールバック)。詳細は `DESIGN.md §1.4` / `skills/governance/SKILL.md`。
   - ※ **客対の一次窓口は「営業」= メインセッション(司令塔=lead)の客対人格** で、teammate ではない
@@ -38,8 +41,8 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
     納品物整備・教訓登録などの **社内作業はコマンドではなく `governance` スキルが自動実行** する
 - **Skills (7)** — `governance`(司令塔) / `document-writer` / `customer-relations`(接遇) /
   `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析)
-- **Hooks (5)** — `hooks/{phase,role,ringi,incident}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制) +
-  `hooks/superior_visit.py`(UserPromptSubmit で上長視察を確率注入)
+- **Hooks (6)** — `hooks/{phase,role,ringi,incident,state}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制・
+  フェーズ移行のPMO限定) + `hooks/superior_visit.py`(UserPromptSubmit で上長視察を確率注入)
 - **Templates (17)** — `templates/proposal.md` 〜 `completion_approval.md`, `incident_report.md`, `meeting_minutes.md`, `client_review.md`
 - **Config (1)** — `config/jtbc.yaml`(組織構造・フェーズ・ゲート・稟議・会議体・インシデントの正本。JTBC専用でモード切替はない)
 

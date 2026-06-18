@@ -55,6 +55,12 @@ ROLE_RULES: dict[str, dict[str, list[str]]] = {
         "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/"],
     },
+    "jtbc-pmo": {
+        # PMO: プロセスの門番。phase 移行の正本管理(state.json)と PM プロセス文書を扱う。
+        # 提案/要件/設計の起案・改訂はしない(課長/主任の領域)。コードも書かない。
+        "allow": [r"^\.jtbc/state\.json", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/gates/", r"^\.jtbc/issues/", r"^\.jtbc/deliverables/", r"^\.jtbc/lessons/", r"^\.jtbc/minutes/", r"^\.jtbc/changes/pending/"],
+        "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/proposal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/"],
+    },
     "jtbc-kacho": {
         "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/risks/", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/designs/detailed_design"],
