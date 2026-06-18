@@ -41,8 +41,8 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
     納品物整備・教訓登録などの **社内作業はコマンドではなく `governance` スキルが自動実行** する
 - **Skills (7)** — `governance`(司令塔) / `document-writer` / `customer-relations`(接遇) /
   `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析)
-- **Hooks (6)** — `hooks/{phase,role,ringi,incident,state}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制・
-  フェーズ移行のPMO限定) + `hooks/superior_visit.py`(UserPromptSubmit で上長視察を確率注入)
+- **Hooks (7)** — `hooks/{phase,role,ringi,incident,state,team}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制・
+  フェーズ移行のPMO限定・常駐teammate強制) + `hooks/superior_visit.py`(UserPromptSubmit で上長視察を確率注入)
 - **Templates (17)** — `templates/proposal.md` 〜 `completion_approval.md`, `incident_report.md`, `meeting_minutes.md`, `client_review.md`
 - **Config (1)** — `config/jtbc.yaml`(組織構造・フェーズ・ゲート・稟議・会議体・インシデントの正本。JTBC専用でモード切替はない)
 
