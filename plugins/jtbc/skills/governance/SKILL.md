@@ -99,7 +99,7 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
 ### チームモード: 役職を常駐 teammate として運用する
 
 - 司令塔(=営業=チームの **lead**。lead は生涯固定)が、各役職を **subagent 定義名を指定して
-  teammate として spawn** する(例: `jtbc-kacho` の定義で teammate「課長」を起こす)。teammate は
+  teammate として spawn** する(例: `jtbc-kacho` の定義で `name: "kacho"` の teammate を起こす)。teammate は
   定義の `tools`/`model`(SES=haiku)/人格本文を継承する。
 - **teammate は裏方専用**: 起案・審査・**並行承認**・設計・実装に使う(teams の得意な並行処理を活かす)。
   **お客様との生対話は teammate に渡さない**(下記「Human Gateway」が正)。
@@ -107,6 +107,10 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
   として起こす。`Agent` ツールを **`run_in_background: true` + `name` 付き** で呼び、`agentType` に
   `jtbc:jtbc-<role>` を指定する(記憶が継続する)。以降の指示は **`SendMessage` で同じ teammate へ** 送り、
   **PJ 完了まで shutdown しない**。
+  > ⚠️ **`name` は ASCII のみ。** Agent ツールの `name` は正規表現 `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$` で
+  > 検証され、**日本語名(例 `"課長"`)は弾かれて spawn が失敗する**。役職スラッグをそのまま使う
+  > (`kacho` / `bucho` / `shacho` / `shunin` / `tantou` / `ses` / `pmo`)。spawn が失敗すると一発実行へ
+  > 逃げ、teams 有効時は `team_guard` にブロックされて手詰まりになるため、必ず ASCII 名で起こす。
   > ⚠️ **一発実行(`subagent_type` 指定でコールドスタート → `Done` で消滅)は teams 有効時は使わない。**
   > これをやると役職が毎回記憶ゼロで起き、課長が二度・三度と別人格で起動され、teammate 間連携も
   > 起きない(= 実質サブエージェント運用に退化する。実機テストで観測された不具合)。teams 有効環境で

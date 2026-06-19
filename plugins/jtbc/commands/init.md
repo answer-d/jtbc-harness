@@ -145,7 +145,7 @@ argument-hint: "[project-name]"
    共通理解が取れたら、合意内容を **裏方の課長へ引き渡して** 提案書を起案させる(営業は起案しない。
    `ringi_guard` 対象外の提案書も委譲が原則)。
    **【teams有効時(既定)】課長は Agent Team の常駐メンバーとして起こす**:`Agent` を
-   `run_in_background: true` + `name: "課長"` + `agentType: "jtbc:jtbc-kacho"` で呼び、以後の指示は
+   `run_in_background: true` + `name: "kacho"`(ASCII 必須・後述) + `agentType: "jtbc:jtbc-kacho"` で呼び、以後の指示は
    同じ teammate へ `SendMessage` で送る(PJ完了まで shutdown しない)。**`subagent_type` 指定だけの
    一発実行はしない**(コールドスタートで毎回別人格になり teammate 連携が起きないため)。
    **【teams無効時のみ】** フォールバックとして `subagent_type: "jtbc:jtbc-kacho"` の一発実行に切り替える。

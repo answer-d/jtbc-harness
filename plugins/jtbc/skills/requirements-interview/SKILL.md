@@ -107,7 +107,7 @@ Claude のリソースで表す(これが本プラグインにおける実質コ
    「この理解で進めてよいか」の合意を取る。
 6. **記録と起案**: 営業が合意内容を整理し、**裏方の課長へ引き渡して** 提案書/要件定義書を起案させる
    (営業は起案しない。技術系は主任へ依頼)。**【teams有効時(既定)】課長は Agent Team の常駐メンバーと
-   して起こす**(`Agent` を `run_in_background: true` + `name: "課長"` + `agentType: "jtbc:jtbc-kacho"`、
+   して起こす**(`Agent` を `run_in_background: true` + `name: "kacho"`(ASCII 必須) + `agentType: "jtbc:jtbc-kacho"`、
    以後は同じ teammate へ `SendMessage`。`subagent_type` 指定だけの一発実行はしない)。**【teams無効時のみ】**
    `subagent_type: "jtbc:jtbc-kacho"` の一発実行にフォールバック。課長が起案中に確認したい点が出たら、
    お客様に直接聞かず **営業へ質問を上げ、営業がまとめてお客様へ確認** する。

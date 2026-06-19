@@ -14,7 +14,7 @@ argument-hint: "[補足: 確認したい論点があれば]"
   (お客様との生対話はリードが担い、teammate に渡さない。即レス・中継なし)。
 - 共通理解が取れたら、合意内容を **裏方の課長へ引き渡して** 提案書/要件定義書を起案させる(営業は起案
   しない)。**【teams有効時(既定)】課長は Agent Team の常駐メンバーとして起こす**(`Agent` を
-  `run_in_background: true` + `name: "課長"` + `agentType: "jtbc:jtbc-kacho"`、以後は同じ teammate へ
+  `run_in_background: true` + `name: "kacho"`(ASCII 必須) + `agentType: "jtbc:jtbc-kacho"`、以後は同じ teammate へ
   `SendMessage`。`subagent_type` 指定だけの一発実行はしない)。**【teams無効時のみ】** 一発実行にフォールバック。
   課長が起案中に確認したい点が出たら、お客様に直接聞かず **営業へ質問を上げ、営業がまとめてお客様へ確認** する。
 
