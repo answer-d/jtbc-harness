@@ -63,12 +63,13 @@ def _debug_payload(payload: dict) -> None:
         pass
 
 
-# cr_type: (path_pattern, 初版作成フェーズ, 初版作成を許す起案者役職)
+# cr_type: (path_pattern, 初版作成フェーズ, 初版起案者roles, 承認者roles)
+# 承認者は稟議なしで当該文書を Edit/Write できる(承認印押印・赤入れが職務のため)。
 DOC_PATTERNS = {
-    "proposal": (r"^\.jtbc/proposal/", "PROPOSAL", {"jtbc-kacho"}),
-    "requirement": (r"^\.jtbc/requirements/", "REQUIREMENTS", {"jtbc-kacho"}),
-    "design_basic": (r"^\.jtbc/designs/basic_design", "BASIC_DESIGN", {"jtbc-kacho"}),
-    "design_detailed": (r"^\.jtbc/designs/detailed_design", "DETAILED_DESIGN", {"jtbc-shunin"}),
+    "proposal": (r"^\.jtbc/proposal/", "PROPOSAL", {"jtbc-kacho"}, {"jtbc-bucho"}),
+    "requirement": (r"^\.jtbc/requirements/", "REQUIREMENTS", {"jtbc-kacho"}, {"jtbc-bucho"}),
+    "design_basic": (r"^\.jtbc/designs/basic_design", "BASIC_DESIGN", {"jtbc-kacho"}, {"jtbc-bucho"}),
+    "design_detailed": (r"^\.jtbc/designs/detailed_design", "DETAILED_DESIGN", {"jtbc-shunin"}, {"jtbc-kacho", "jtbc-bucho"}),
 }
 
 
@@ -108,9 +109,11 @@ def main() -> int:
     }
 
     phase = state.get("phase")
-    for cr_type, (pattern, drafting_phase, drafter_roles) in DOC_PATTERNS.items():
+    for cr_type, (pattern, drafting_phase, drafter_roles, approver_roles) in DOC_PATTERNS.items():
         if re.search(pattern, relative):
             if phase == drafting_phase and agent_name in drafter_roles:
+                return 0
+            if agent_name in approver_roles:
                 return 0
             approved_dir = cwd / ".jtbc" / "changes" / "approved"
             if approved_dir.exists():

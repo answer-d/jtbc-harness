@@ -269,6 +269,26 @@ def test_ringi_guard_allows_with_approved_cr(project):
     assert r.passed
 
 
+def test_ringi_guard_allows_approver_to_stamp(project):
+    from conftest import run_hook
+    # 承認者(bucho)は稟議なしで提案書へ承認印を押せる
+    p = project(phase="PROPOSAL")
+    payload = p.payload(agent_type="jtbc:jtbc-bucho", tool_name="Edit",
+                        tool_input={"file_path": ".jtbc/proposal/proposal.md"})
+    r = run_hook("ringi_guard", payload)
+    assert r.passed
+
+
+def test_ringi_guard_blocks_non_approver_revision(project):
+    from conftest import run_hook
+    # 主任(shunin)は提案書の承認者ではないのでブロックされる
+    p = project(phase="PROPOSAL")
+    payload = p.payload(agent_type="jtbc:jtbc-shunin", tool_name="Edit",
+                        tool_input={"file_path": ".jtbc/proposal/proposal.md"})
+    r = run_hook("ringi_guard", payload)
+    assert r.blocked and "[ringi_guard]" in r.stderr
+
+
 # ---------------------------------------------------------------------------
 # state_guard: フェーズ移行の権限(PMO限定)+ 事前条件
 # ---------------------------------------------------------------------------
