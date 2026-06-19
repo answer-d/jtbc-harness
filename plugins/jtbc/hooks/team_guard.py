@@ -65,15 +65,27 @@ def _truthy(v) -> bool:
     return bool(v)
 
 
+def _config_root() -> Path:
+    """Claude Code の config ルート。`CLAUDE_CONFIG_DIR` があれば尊重し、無ければ ~/.claude。
+
+    Claude Code は config ルートの移設に `CLAUDE_CONFIG_DIR` を使う。これを尊重することで
+    (a) ユーザーの config 移設に追従し、(b) テストは一時ディレクトリを指すだけで隔離できる。
+    """
+    override = os.environ.get("CLAUDE_CONFIG_DIR", "").strip()
+    if override:
+        return Path(override)
+    return Path.home() / ".claude"
+
+
 def _find_team_config(session_id):
     """payload の session_id に対応する team config(dict)を返す。見つからなければ None。
 
-    team dir は ~/.claude/teams/session-<...>/config.json。config.json の leadSessionId が
+    team dir は <config_root>/teams/session-<...>/config.json。config.json の leadSessionId が
     司令塔(lead)のセッション ID = spawn を呼ぶ側の session_id と一致するものを正とする。
     """
     if not session_id:
         return None
-    teams_dir = Path.home() / ".claude" / "teams"
+    teams_dir = _config_root() / "teams"
     if not teams_dir.is_dir():
         return None
     for cfg in teams_dir.glob("session-*/config.json"):
