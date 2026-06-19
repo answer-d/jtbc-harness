@@ -19,6 +19,13 @@ PLUGIN_ROOT = REPO_ROOT / "plugins" / "jtbc"
 HOOKS_DIR = PLUGIN_ROOT / "hooks"
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "e2e: 実機 claude を起動する層4テスト(既定で skip。JTBC_E2E=1 で有効化)",
+    )
+
+
 @dataclass
 class HookResult:
     exit_code: int
