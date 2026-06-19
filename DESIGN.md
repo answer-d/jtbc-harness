@@ -54,15 +54,16 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
                                                  ▼        ▼
                                     ┌───────────────────────────────────────┐
                                     │ Hooks                                 │
-                                    │ PreToolUse (5):                       │
+                                    │ PreToolUse (6):                       │
                                     │ - phase_guard   (フェーズ強制)         │
                                     │ - role_guard    (権限分離)             │
                                     │ - ringi_guard   (稟議承認強制)         │
                                     │ - incident_guard(緊急対応モード強制)   │
                                     │ - state_guard   (phase移行をPMOに限定) │
                                     │ - team_guard    (常駐teammate強制)     │
-                                    │ UserPromptSubmit (1):                 │
-                                    │ - superior_visit(上長視察 確率発火)    │
+                                    │ UserPromptSubmit (2):                 │
+                                    │ - superior_visit  (上長視察 確率発火)  │
+                                    │ - approval_sync_guard(承認転記漏れ通知)│
                                     └───────────────┬───────────────────────┘
                                                 ▼
                                     ┌───────────────────────┐
@@ -79,7 +80,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 | **Teammates / Subagents (7)** | 6役職(社長〜SES)+ PMO(プロセスの門番)。teams 有効環境では常駐 teammate、無効環境ではサブエージェントとして同一定義を再利用 | `agents/*.md` (tools: 指定) |
 | **Slash Commands (14)** | ユーザー操作の入口 | `commands/*.md` |
 | **Skills (7)** | ガバナンス制御・接遇・要望ヒアリング・会議・インシデント・なぜなぜ・雛形挿入 | `skills/*/SKILL.md` |
-| **Hooks (6)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制・フェーズ移行のPMO限定 / ユーザー入力時の上長視察注入 | `hooks/hooks.json` + `*.py` |
+| **Hooks (8)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制・フェーズ移行のPMO限定 / ユーザー入力時の上長視察注入・承認転記漏れ通知 | `hooks/hooks.json` + `*.py` |
 | **State** | プロジェクト現状 | `.jtbc/state.json` |
 | **Templates (17)** | ドキュメント雛形 | `templates/*.md` |
 | **Modes (1)** | 組織文化プロファイル (JTBC専用) | `modes/jtbc.yaml` |
@@ -164,11 +165,12 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
     (旧 gate / ringi / shonin / phase / meeting / noubi / kyokun / role / mode コマンドは撤去済み)
   - client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
 - **Skills (7)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
-- **Hooks (7)**: PreToolUse 6種 (phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 1種 (superior_visit)
+- **Hooks (8)**: PreToolUse 6種 (phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 2種 (superior_visit / approval_sync_guard)
   - `team_guard`: teams 有効環境(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)で jtbc 役職を一発実行(`subagent_type` のみ・`run_in_background` 無し)で spawn しようとすると物理ブロックし、常駐 teammate 起動へ誘導(司令塔の「一発実行への退化」を物理担保。teams 無効環境では素通り)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
   - `state_guard`: `.jtbc/state.json` の `phase` 変更を **(A)権限: PMO(`jtbc-pmo`)以外は物理ブロック** + **(B)プロセス: 移行先ゲートの事前条件(ゲート承認者全員 approved・客先承認 APPROVED・必要書類が雛形でなく記入済み)を満たさなければ PMO であってもブロック**。審査スキップ・客先承認スキップ・空テンプレのまま前進を物理的に防ぐ(approvals 等 phase 以外の更新は素通り)
   - `superior_visit`: 各ユーザー入力時に社長(確率0.005)/部長(確率0.03)の上長視察を確率発火し文脈へ注入(COMPLETED・緊急対応中は発火しない)
+  - `approval_sync_guard`: 各ユーザー入力時に gate 記録(`.jtbc/gates/<gate>_gate.md`)の押印(🔴・実日付)を走査し、承認の正本 `state.json#approvals` へ未転記の承認があればリード/PMO へ転記を促す(非ブロッキング。承認者役職は state.json を直接書けない=role_guard が物理担保するため、転記漏れは司令塔の認知漏れになりやすく、これを物理検出で補う)
 - **Templates (17)**: 提案書〜完了承認書 + 障害報告書 + 議事録 + 客先レビュー記録
 - **Modes (1)**: jtbc.yaml (JTBC専用)
 
@@ -219,7 +221,8 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── incident_guard.py    (PreToolUse: 緊急対応モード強制)
     │   ├── state_guard.py       (PreToolUse: phase移行をPMOに限定)
     │   ├── team_guard.py        (PreToolUse: teams有効時の一発実行を阻止・常駐teammate強制)
-    │   └── superior_visit.py    (UserPromptSubmit: 上長視察 確率発火)
+    │   ├── superior_visit.py    (UserPromptSubmit: 上長視察 確率発火)
+    │   └── approval_sync_guard.py (UserPromptSubmit: 承認転記漏れをリード/PMOへ通知)
     ├── templates/
     │   ├── proposal.md          (提案書)
     │   ├── project_plan.md … completion_approval.md
