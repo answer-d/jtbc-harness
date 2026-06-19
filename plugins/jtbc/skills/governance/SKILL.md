@@ -119,7 +119,10 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
   > **いずれにせよユーザー対話はリードが担い、teammate はユーザーに直接話しかけない**。
 - **遅延常駐**: 出番が来た役職を **その時点で初めて** spawn し、以降 **PJ 完了まで shutdown せず生かし続ける**
   (記憶と一貫性を保持)。提案期は課長・部長のみ、後工程で主任・担当・SES・社長が順次 join する。
-  同じ役職を二重に spawn しない(既に在席なら SendMessage で指示する)。
+  同じ役職を二重に spawn しない(既に在席なら SendMessage で指示する)。**この既定は `team_guard`
+  フックが物理的に強制する**(teams 有効 × jtbc 役職 × 同役職が team config に在席済み の常駐 spawn を
+  `exit 2` でブロックし、既存 teammate への SendMessage へ誘導。待機中=idle の teammate も「在席」と
+  みなす。別 name で `bucho-2` / `pmo-2` を起こす退化を防ぐ)。
 - **指示は SendMessage**: 起案・レビュー・承認・報告の依頼は、常駐 teammate へ **メッセージで** 渡す
   (毎回コールドスタートで起こし直さない)。teammate は自分の文脈(過去の起案・承認・指摘)を覚えている。
 - **入れ子チーム禁止のため lead が全 spawn**: teammate は自分の部下を spawn できない。社長〜SES の
@@ -127,6 +130,15 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
 - **セッション再開時の再 spawn**: `/resume` で teammate は復元されない。再開時は lead が現 phase に
   応じて必要役職を **再 spawn** し、`state.json` の現状(approvals/active_gate 等)を各 teammate に
   共有してから再開する。
+- **【解散手順】PJ 完了時・ユーザーの停止指示時は lead が teammate を確実に終了させる**:
+  常駐 teammate は idle(`came to rest`)でもプロセスが生きているため、放置すると残り続ける。解散は **lead が** 行う。
+  - **既定: `TaskStop`(spawn 時に得た task_id を指定)** で各 teammate を終了させる。これは相手の協力を
+    要さない harness レベルの強制終了で、idle でも確実に止まる。**spawn のたびに返る task_id を控えておく**。
+  - フォールバック(legacy): `SendMessage` で `{"type":"shutdown_request","reason":...}` を送ると、teammate が
+    `shutdown_response`(approve:true)を返した時点で終了する(各役職定義の「チーム解散・シャットダウン」節)。
+    協調的だが、idle teammate も自動で受信・起床して応答するため通常は機能する。**確実性は `TaskStop` が上**。
+  - ユーザーから「停止してほしい」「エージェントが多すぎる」等の指示が来たら、**まず `TaskList` で現在の
+    background task を把握し、不要な teammate を `TaskStop` で順に終了** させてから状況を報告する。
 
 ### 【最重要】Human Gateway: 生対話はリード、teammate の質問はリードへ集約
 
