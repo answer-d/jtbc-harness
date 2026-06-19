@@ -49,6 +49,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/superior_visit.py",
             "description": "上長視察(社長/部長)の確率的発生"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/approval_sync_guard.py",
+            "description": "gate記録に押印済みだがstate.json#approvals未転記の承認をリード/PMOへ通知"
           }
         ]
       }

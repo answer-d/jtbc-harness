@@ -349,3 +349,60 @@ def test_state_guard_passes_non_phase_update(project):
                                     "content": json.dumps(same, ensure_ascii=False)})
     r = run_hook("state_guard", payload)
     assert r.passed
+
+
+# ---------------------------------------------------------------------------
+# approval_sync_guard: gate 記録の押印 → state.json#approvals 転記漏れ検出
+# (UserPromptSubmit・非ブロッキング。検出時のみ stdout にリマインドを出す)
+# ---------------------------------------------------------------------------
+
+_STAMPED_GATE = (
+    "## 承認パス\n"
+    "### 部長 (jtbc-bucho) — 承認済み\n"
+    "[x] 🔴 承認  部長  (jtbc-bucho)  2026-06-19\n"
+    "### 社長 (jtbc-shacho) — 承認待ち\n"
+    "[ ] 🔴 承認  社長  (jtbc-shacho)  YYYY-MM-DD\n"
+)
+
+
+def test_approval_sync_detects_untranscribed(project):
+    """gate に押印済みだが approvals 未転記 → リマインドを stdout に出す。"""
+    from conftest import run_hook
+    p = project(phase="PROPOSAL", approvals={})
+    p.write_doc(".jtbc/gates/proposal_gate.md", _STAMPED_GATE)
+    r = run_hook("approval_sync_guard", p.payload())
+    assert r.passed  # 非ブロッキング
+    assert "承認転記リマインド" in r.stdout
+    assert "proposal_gate" in r.stdout and "bucho" in r.stdout
+    # 未押印(YYYY-MM-DD 雛形)の社長は通知対象にしない
+    assert "shacho" not in r.stdout
+
+
+def test_approval_sync_quiet_when_transcribed(project):
+    """押印が approvals へ転記済みなら何も出さない。"""
+    from conftest import run_hook
+    p = project(phase="PROPOSAL", approvals={"proposal_gate": {"bucho": "approved"}})
+    p.write_doc(".jtbc/gates/proposal_gate.md", _STAMPED_GATE)
+    r = run_hook("approval_sync_guard", p.payload())
+    assert r.passed and r.stdout.strip() == ""
+
+
+def test_approval_sync_ignores_placeholder_only(project):
+    """雛形(YYYY-MM-DD)のみで実押印が無ければ通知しない。"""
+    from conftest import run_hook
+    placeholder = (
+        "[ ] 🔴 承認  部長  (jtbc-bucho)  YYYY-MM-DD\n"
+        "[ ] 🔴 承認  社長  (jtbc-shacho)  YYYY-MM-DD\n"
+    )
+    p = project(phase="PROPOSAL", approvals={})
+    p.write_doc(".jtbc/gates/proposal_gate.md", placeholder)
+    r = run_hook("approval_sync_guard", p.payload())
+    assert r.passed and r.stdout.strip() == ""
+
+
+def test_approval_sync_passes_without_gates(project):
+    """gates/ が無ければ素通り(非 JTBC・初期状態)。"""
+    from conftest import run_hook
+    p = project(phase="PROPOSAL", approvals={})
+    r = run_hook("approval_sync_guard", p.payload())
+    assert r.passed and r.stdout.strip() == ""
