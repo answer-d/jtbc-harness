@@ -116,3 +116,6 @@ superpowers/
 # Python
 __pycache__/
 *.py[cod]
+
+## test project
+test_project/
