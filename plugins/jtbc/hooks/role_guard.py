@@ -109,6 +109,11 @@ def main() -> int:
     cwd = Path(payload.get("cwd", "."))
     relative = str(Path(file_path).resolve().relative_to(cwd.resolve())) if Path(file_path).is_absolute() else file_path
 
+    # --- 役職メモ(.jtbc/memory/): 許可/拒否は memory_grant フックが一元管理する ---
+    # role_guard はここに関与しない(whitelist で誤ってブロックしないよう素通り)。
+    if relative.replace("\\", "/").startswith(".jtbc/memory/"):
+        return 0
+
     if match_any(rules["deny"], relative):
         print(
             f"[role_guard] BLOCKED: 役職 '{agent_name}' は '{relative}' への書込みが禁止されています。\n"

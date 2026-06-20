@@ -92,6 +92,33 @@ def test_every_hook_is_referenced():
     assert on_disk == referenced, f"未参照のフック: {on_disk - referenced}"
 
 
+# permissionDecision(stdout JSON)で判定し exit 2 を使わない PreToolUse フック。
+# ライフサイクル統合テストの WRITE_GUARDS(exit 2 ベースのガード連鎖)からは除外される。
+PERMISSION_DECISION_HOOKS = {"memory_grant"}
+
+
+def test_lifecycle_write_guards_in_sync_with_hooks_json():
+    """test_lifecycle.WRITE_GUARDS が hooks.json の Edit|Write 系 exit-2 ガードと一致するか。
+
+    Edit|Write matcher に新しい exit-2 ガードを足したのに WRITE_GUARDS を更新し忘れると、
+    統合テストが新ガードを通さずすり抜ける。このテストがその更新漏れ(ドリフト)を検出する。
+    """
+    import test_lifecycle
+
+    edit_write_hooks = set()
+    for matcher in _hooks_json()["hooks"].get("PreToolUse", []):
+        if "Edit" in matcher.get("matcher", ""):
+            for hook in matcher["hooks"]:
+                m = re.search(r"/hooks/(\w+)\.py", hook["command"])
+                if m:
+                    edit_write_hooks.add(m.group(1))
+    expected = edit_write_hooks - PERMISSION_DECISION_HOOKS
+    assert set(test_lifecycle.WRITE_GUARDS) == expected, (
+        f"WRITE_GUARDS がドリフト: hooks.json={sorted(expected)} / "
+        f"lifecycle={sorted(test_lifecycle.WRITE_GUARDS)}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # 全フックが構文的に正しい
 # ---------------------------------------------------------------------------

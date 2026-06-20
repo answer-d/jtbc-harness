@@ -78,12 +78,12 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 | 要素 | 役割 | 実装 |
 |---|---|---|
 | **Teammates / Subagents (7)** | 6役職(社長〜SES)+ PMO(プロセスの門番)。teams 有効環境では常駐 teammate、無効環境ではサブエージェントとして同一定義を再利用 | `agents/*.md` (tools: 指定) |
-| **Slash Commands (14)** | ユーザー操作の入口 | `commands/*.md` |
-| **Skills (7)** | ガバナンス制御・接遇・要望ヒアリング・会議・インシデント・なぜなぜ・雛形挿入 | `skills/*/SKILL.md` |
-| **Hooks (8)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制・フェーズ移行のPMO限定 / ユーザー入力時の上長視察注入・承認転記漏れ通知 | `hooks/hooks.json` + `*.py` |
+| **Slash Commands (4)** | ユーザー操作の入口(init/status/hearing/client-review。社内作業は governance が自動実行) | `commands/*.md` |
+| **Skills (8)** | ガバナンス制御・接遇・要望ヒアリング・会議・インシデント・なぜなぜ・雛形挿入・役職メモ | `skills/*/SKILL.md` |
+| **Hooks (11)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制・フェーズ移行のPMO限定・役職メモ書込みの自動承認 / ユーザー入力時の上長視察注入・承認転記漏れ通知 / フェーズ足跡の自動記録・メモ記録の促し | `hooks/hooks.json` + `*.py` |
 | **State** | プロジェクト現状 | `.jtbc/state.json` |
 | **Templates (17)** | ドキュメント雛形 | `templates/*.md` |
-| **Modes (1)** | 組織文化プロファイル (JTBC専用) | `modes/jtbc.yaml` |
+| **Config (1)** | 組織文化プロファイル (JTBC専用) | `config/jtbc.yaml` |
 | **Marketplace** | 公式配布 | `.claude-plugin/marketplace.json` |
 
 ### 1.3 状態管理ファイル
@@ -124,8 +124,9 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
   teammate として spawn。teammate は定義の `tools`/`model`(SES=haiku)/人格を継承する。
 - **遅延常駐**: 出番が来た役職をその時点で spawn し、PJ 完了まで生かし続ける。提案期は課長・部長のみ、
   後工程で主任・担当・SES・社長が順次 join。
-- **報連相 = mailbox**: teammate 同士は直接メッセージできるが、あて先は原則 **直上・直下** に限る
-  (社長⇄部長⇄課長⇄主任⇄担当→SES)。lead が系統飛ばしを是正。
+- **報連相 = mailbox**: teammate 同士は **誰とでも** 直接メッセージできる(ハーネスは宛先を制限しない)。
+  やり取り自体は縛らず、PM 規律として **指示・承認・エスカレーション(意思決定)は指揮系統**(社長⇄部長⇄課長⇄主任⇄担当→SES)
+  **を尊重** する点のみを課す。情報共有・確認の横連携は妨げない。lead が意思決定系統の乱れ(勝手な承認・指示の飛ばし)を是正。
 - **入れ子チーム禁止**: teammate は部下を spawn できない。6役職すべて lead が spawn する
   (階層は spawn 木ではなくメッセージ規律で表現)。
 - **物理ガバナンスは無改修で有効**: teammate は別インスタンスだが、PreToolUse payload に
@@ -137,6 +138,24 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
   応じて必要役職を再 spawn する。
 
 実行ロジックの正本は `skills/governance/SKILL.md`「役職の運用」。
+
+### 1.5 役職メモ (永続記憶 / Per-Role Memory)
+
+エージェントの作業記憶は **揮発的**(サブエージェントは役目を終えると消え、常駐 teammate も
+セッション終了・`/resume` で失われる)。そこで各役職は自分の知見を `.jtbc/memory/<役職>/` に
+書き出して永続化する。コールドスタートの新インスタンスでも起動時に読み直せば文脈を再構築でき、
+組織としての継続性が保たれる(プロジェクトの正本は `state.json` と正式文書。メモはそこに載らない
+**役職固有の非自明な作業知** だけを持つ — 重複させない)。
+
+- **起動時に読む(リハイドレート)**: 役職は最初に `.jtbc/memory/<役職>/INDEX.md` を読み、過去の決定・前提・つまずきを思い出す。
+- **要所で確認なく書く**: 決定・理由・前提・つまずき等を得たら即 `.jtbc/memory/<役職>/<slug>.md` に記録。
+  書込み許可は `memory_grant` フックが **自動承認** するため、ユーザーは settings.json を触らない
+  (プラグインは権限ルールを配布できないが、権限判定フックは配布できる Claude Code の仕様を利用)。
+- **フェーズ足跡は自動**: `memory_timeline`(PostToolUse)が phase 変更を `_timeline.md` に冪等追記。
+- **書き忘れの促し**: `memory_reminder`(SubagentStop)が知識役職のメモ未記録を通知(非ブロッキング)。
+- **権限分離**: 各役職は自分の `.jtbc/memory/<役職>/` のみ書ける(他役職メモは `memory_grant` が deny)。
+
+正本は `skills/memory/SKILL.md`。
 
 ---
 
@@ -164,8 +183,11 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
     内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・納品物整備・教訓登録。
     (旧 gate / ringi / shonin / phase / meeting / noubi / kyokun / role / mode コマンドは撤去済み)
   - client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
-- **Skills (7)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析)
-- **Hooks (8)**: PreToolUse 6種 (phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 2種 (superior_visit / approval_sync_guard)
+- **Skills (8)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析) / memory(役職メモ)
+- **Hooks (11)**: PreToolUse 7種 (memory_grant / phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 2種 (superior_visit / approval_sync_guard) + PostToolUse 1種 (memory_timeline) + SubagentStop 1種 (memory_reminder)
+  - `memory_grant`: `.jtbc/memory/<役職>/` への書込みを **自動承認**(permissionDecision: allow)し、ユーザーが settings.json に許可を書かずとも役職が確認なしでメモを残せる(バックグラウンド・エージェントの自動拒否も回避)。他役職のメモへの書込みは deny。詳細は `skills/memory/SKILL.md`
+  - `memory_timeline`: `state.json#phase` 変更時に `.jtbc/memory/_timeline.md` へ「実時刻・役職・新フェーズ」を冪等に追記(決定論的タイムライン)
+  - `memory_reminder`: 知識生産役職(課長/主任/部長/PMO)がメモ未記録のまま応答を終えたとき、随時記録を促す(通知のみ・非ブロッキング)
   - `team_guard`: teams 有効環境(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)で jtbc 役職を一発実行(`subagent_type` のみ・`run_in_background` 無し)で spawn しようとすると物理ブロックし、常駐 teammate 起動へ誘導(司令塔の「一発実行への退化」を物理担保。teams 無効環境では素通り)
   - `incident_guard`: `active_incidents` 非空の間、`.jtbc/(proposal|requirements|designs|plans|wbs)/` への Edit/Write を物理ブロック(緊急対応モード強制)
   - `state_guard`: `.jtbc/state.json` の `phase` 変更を **(A)権限: PMO(`jtbc-pmo`)以外は物理ブロック** + **(B)プロセス: 移行先ゲートの事前条件(ゲート承認者全員 approved・客先承認 APPROVED・必要書類が雛形でなく記入済み)を満たさなければ PMO であってもブロック**。審査スキップ・客先承認スキップ・空テンプレのまま前進を物理的に防ぐ(approvals 等 phase 以外の更新は素通り)
@@ -212,9 +234,11 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── requirements-interview/SKILL.md
     │   ├── meetings/SKILL.md
     │   ├── incident-response/SKILL.md
-    │   └── naze-naze/SKILL.md
+    │   ├── naze-naze/SKILL.md
+    │   └── memory/SKILL.md      (役職メモ / 永続記憶)
     ├── hooks/
     │   ├── hooks.json
+    │   ├── memory_grant.py      (PreToolUse: .jtbc/memory/書込みを自動承認・他役職メモはdeny)
     │   ├── phase_guard.py       (PreToolUse: フェーズ強制)
     │   ├── role_guard.py        (PreToolUse: 権限分離)
     │   ├── ringi_guard.py       (PreToolUse: 稟議承認強制)
@@ -222,13 +246,15 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── state_guard.py       (PreToolUse: phase移行をPMOに限定)
     │   ├── team_guard.py        (PreToolUse: teams有効時の一発実行を阻止・常駐teammate強制)
     │   ├── superior_visit.py    (UserPromptSubmit: 上長視察 確率発火)
-    │   └── approval_sync_guard.py (UserPromptSubmit: 承認転記漏れをリード/PMOへ通知)
+    │   ├── approval_sync_guard.py (UserPromptSubmit: 承認転記漏れをリード/PMOへ通知)
+    │   ├── memory_timeline.py   (PostToolUse: phase変更を_timeline.mdへ自動記録)
+    │   └── memory_reminder.py   (SubagentStop: 知識役職にメモ記録を促す・通知のみ)
     ├── templates/
     │   ├── proposal.md          (提案書)
     │   ├── project_plan.md … completion_approval.md
     │   ├── incident_report.md   (障害報告書)
     │   └── meeting_minutes.md   (議事録)
-    ├── modes/jtbc.yaml
+    ├── config/jtbc.yaml
     └── state/{schema.json, initial_state.json}
 ```
 
@@ -421,7 +447,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ## 8. フェーズゲート設計
 
-6つの審査会(`modes/jtbc.yaml#gates` を正とする)。各ゲートは「必要書類 + 承認者 + チェックリスト」。
+6つの審査会(`config/jtbc.yaml#gates` を正とする)。各ゲートは「必要書類 + 承認者 + チェックリスト」。
 **発動はユーザー操作ではなく、司令塔(governance)が発火条件を満たしたときに自動開催する**
 (旧 `/jtbc:gate` コマンドは撤去済み)。実行ロジックの正本は `skills/governance/SKILL.md`。
 
@@ -449,7 +475,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 - **承認印**: 承認は 🔴 のハンコ表現で文書へ押印する
 - **工程内遷移**: 実装→単体→総合テストはゲート無し。主任が完了確認したら司令塔が自動で進める
 - hook(`phase_guard.py`)が、実装系フェーズ以外での `src/` 書込みを阻止する
-- **承認の正本と機械チェック(C-3)**: 承認の正本は `state.json#approvals["<gate>_gate"]`。gate 記録 `.jtbc/gates/<gate>_gate.md` は参照用。phase を `next_phase` へ進める前に `modes/jtbc.yaml#gates[<gate>].approvers` の全員が `approved` かを機械チェックし、1人でも未承認なら遷移しない(ハンコの実効化)
+- **承認の正本と機械チェック(C-3)**: 承認の正本は `state.json#approvals["<gate>_gate"]`。gate 記録 `.jtbc/gates/<gate>_gate.md` は参照用。phase を `next_phase` へ進める前に `config/jtbc.yaml#gates[<gate>].approvers` の全員が `approved` かを機械チェックし、1人でも未承認なら遷移しない(ハンコの実効化)
 - **No-Go 時の処理(A-3)**: ゲート否決(No-Go)の場合は phase を `previous_phase`(審査前のフェーズ)に戻し、`active_gate=null` として差し戻し理由を gate 記録 .md に残す
 
 ---
@@ -541,7 +567,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 ## 13. Company Mode
 
 本プラグインは **JTBC 専用**(かつての startup モードは廃止)。
-`modes/jtbc.yaml` が唯一の実体。mode 切替(set)は無く、`state.json#mode` に常に `"jtbc"` を保持する
+`config/jtbc.yaml` が唯一の実体。mode 切替(set)は無く、`state.json#mode` に常に `"jtbc"` を保持する
 (かつての `/jtbc:mode` 確認コマンドは撤去。情報は本ドキュメント参照)。
 
 将来の拡張余地(未実装): `agile`(PO/SM/Dev)、`oss`(maintainer/contributor/reviewer)、`gov`(統括/設計/実装/監査)。
@@ -567,7 +593,7 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
 
 ### 含むもの (実装済)
 - plugin.json / marketplace.json
-- 7 agents(6役職 + PMO)/ 13 commands / 7 skills / 6 hooks(本実装) / 17 templates / 1 mode / state schema
+- 7 agents(6役職 + PMO)/ 4 commands / 8 skills / 11 hooks(本実装) / 17 templates / 1 mode / state schema
 
 ### 検収シナリオ (MVPが「動いた」と言える基準)
 
