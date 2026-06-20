@@ -59,6 +59,26 @@ def test_grant_ignores_non_memory_paths():
     assert _decision(r) is None  # decision を出さない
 
 
+def test_grant_ignores_non_edit_tools():
+    # Read 等 Edit|Write 以外のツールには関与しない
+    r = run_hook("memory_grant", {
+        "tool_name": "Read",
+        "tool_input": {"file_path": ".jtbc/memory/kacho/a.md"},
+        "agent_type": "jtbc:jtbc-kacho",
+    })
+    assert r.passed
+    assert _decision(r) is None
+
+
+def test_grant_allows_own_memory_via_multiedit():
+    r = run_hook("memory_grant", {
+        "tool_name": "MultiEdit",
+        "tool_input": {"file_path": ".jtbc/memory/pmo/x.md"},
+        "agent_type": "jtbc:jtbc-pmo",
+    })
+    assert _decision(r) == "allow"
+
+
 # --- role_guard が memory を素通り ---------------------------------------
 
 def test_role_guard_defers_memory():
@@ -99,6 +119,17 @@ def test_timeline_idempotent_same_phase(project):
     assert timeline.count("phase=") == 1
 
 
+def test_timeline_noop_for_non_state_writes(project):
+    # state.json 以外への書込みではタイムラインを作らない
+    p = project(phase="PROPOSAL")
+    run_hook("memory_timeline", p.payload(
+        tool_name="Write",
+        tool_input={"file_path": ".jtbc/proposal/proposal.md"},
+        agent_type="jtbc:jtbc-kacho",
+    ))
+    assert not (p.root / ".jtbc" / "memory" / "_timeline.md").exists()
+
+
 # --- memory_reminder -----------------------------------------------------
 
 def test_reminder_notifies_when_empty(project):
@@ -112,5 +143,13 @@ def test_reminder_silent_when_recorded(project):
     p = project()
     p.write_doc(".jtbc/memory/kacho/lesson.md", "# x")
     r = run_hook("memory_reminder", p.payload(agent_type="jtbc:jtbc-kacho"))
+    assert r.passed
+    assert r.stderr.strip() == ""
+
+
+def test_reminder_silent_for_non_knowledge_role(project):
+    # 実装のみの SES は知識生産役職でないので促さない
+    p = project()
+    r = run_hook("memory_reminder", p.payload(agent_type="jtbc:jtbc-ses"))
     assert r.passed
     assert r.stderr.strip() == ""

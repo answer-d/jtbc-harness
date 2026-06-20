@@ -10,7 +10,9 @@ import json
 
 from conftest import run_hook
 
-# 本番 hooks.json の Edit|Write 系と同じ順序。いずれかが exit 2 なら tool call はブロックされる。
+# 本番 hooks.json の Edit|Write 系 exit-2 ガードと同じ順序。いずれかが exit 2 なら tool call はブロックされる。
+# memory_grant は同じ matcher に居るが permissionDecision(stdout)方式で exit 2 を使わないため含めない。
+# このリストと hooks.json のドリフトは test_consistency.test_lifecycle_write_guards_in_sync_with_hooks_json が検出する。
 WRITE_GUARDS = ["phase_guard", "role_guard", "ringi_guard", "incident_guard", "state_guard"]
 
 
