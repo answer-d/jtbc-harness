@@ -144,21 +144,6 @@ AskUserQuestion({
 })
 ```
 
-```
-AskUserQuestion({
-  questions: [{
-    header: "対象環境",
-    question: "対象とする環境はいかがいたしましょうか。スマホ対応の要否で工数が変わってまいります。",
-    multiSelect: false,
-    options: [
-      { label: "Chrome のみ (推奨)", description: "弊社推奨。デスクトップ版 Google Chrome 最新版のみ・スマホ対応なし。最も軽く仕上がります。" },
-      { label: "主要PCブラウザ",     description: "Chrome/Edge/Firefox/Safari を対象。検証の往復が増えます。" },
-      { label: "スマホ対応も含む",   description: "レスポンシブ対応を含む案。工数(やり取りの回数)が増えます。" },
-    ],
-  }],
-})
-```
-
 > 互いに独立で細かい確認は、`AskUserQuestion` の `questions` に最大4問まとめてよい(往復を減らす)。
 > 推奨案が自明でない上流ノード(依頼内容そのものが不明 等)は、選択肢を用意できないので素直に
 > テキストで伺う(`AskUserQuestion` は推奨案・選択肢が立つ問いに使う)。
