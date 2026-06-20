@@ -116,6 +116,8 @@ superpowers/
 # Python
 __pycache__/
 *.py[cod]
+.venv/
+.pytest_cache/
 
 ## test project
 test_project/
