@@ -78,12 +78,12 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 | 要素 | 役割 | 実装 |
 |---|---|---|
 | **Teammates / Subagents (7)** | 6役職(社長〜SES)+ PMO(プロセスの門番)。teams 有効環境では常駐 teammate、無効環境ではサブエージェントとして同一定義を再利用 | `agents/*.md` (tools: 指定) |
-| **Slash Commands (14)** | ユーザー操作の入口 | `commands/*.md` |
+| **Slash Commands (4)** | ユーザー操作の入口(init/status/hearing/client-review。社内作業は governance が自動実行) | `commands/*.md` |
 | **Skills (8)** | ガバナンス制御・接遇・要望ヒアリング・会議・インシデント・なぜなぜ・雛形挿入・役職メモ | `skills/*/SKILL.md` |
 | **Hooks (11)** | ツール実行時の権限分離・フェーズ強制・緊急対応強制・フェーズ移行のPMO限定・役職メモ書込みの自動承認 / ユーザー入力時の上長視察注入・承認転記漏れ通知 / フェーズ足跡の自動記録・メモ記録の促し | `hooks/hooks.json` + `*.py` |
 | **State** | プロジェクト現状 | `.jtbc/state.json` |
 | **Templates (17)** | ドキュメント雛形 | `templates/*.md` |
-| **Modes (1)** | 組織文化プロファイル (JTBC専用) | `modes/jtbc.yaml` |
+| **Config (1)** | 組織文化プロファイル (JTBC専用) | `config/jtbc.yaml` |
 | **Marketplace** | 公式配布 | `.claude-plugin/marketplace.json` |
 
 ### 1.3 状態管理ファイル
@@ -254,7 +254,7 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── project_plan.md … completion_approval.md
     │   ├── incident_report.md   (障害報告書)
     │   └── meeting_minutes.md   (議事録)
-    ├── modes/jtbc.yaml
+    ├── config/jtbc.yaml
     └── state/{schema.json, initial_state.json}
 ```
 
@@ -447,7 +447,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ## 8. フェーズゲート設計
 
-6つの審査会(`modes/jtbc.yaml#gates` を正とする)。各ゲートは「必要書類 + 承認者 + チェックリスト」。
+6つの審査会(`config/jtbc.yaml#gates` を正とする)。各ゲートは「必要書類 + 承認者 + チェックリスト」。
 **発動はユーザー操作ではなく、司令塔(governance)が発火条件を満たしたときに自動開催する**
 (旧 `/jtbc:gate` コマンドは撤去済み)。実行ロジックの正本は `skills/governance/SKILL.md`。
 
@@ -475,7 +475,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 - **承認印**: 承認は 🔴 のハンコ表現で文書へ押印する
 - **工程内遷移**: 実装→単体→総合テストはゲート無し。主任が完了確認したら司令塔が自動で進める
 - hook(`phase_guard.py`)が、実装系フェーズ以外での `src/` 書込みを阻止する
-- **承認の正本と機械チェック(C-3)**: 承認の正本は `state.json#approvals["<gate>_gate"]`。gate 記録 `.jtbc/gates/<gate>_gate.md` は参照用。phase を `next_phase` へ進める前に `modes/jtbc.yaml#gates[<gate>].approvers` の全員が `approved` かを機械チェックし、1人でも未承認なら遷移しない(ハンコの実効化)
+- **承認の正本と機械チェック(C-3)**: 承認の正本は `state.json#approvals["<gate>_gate"]`。gate 記録 `.jtbc/gates/<gate>_gate.md` は参照用。phase を `next_phase` へ進める前に `config/jtbc.yaml#gates[<gate>].approvers` の全員が `approved` かを機械チェックし、1人でも未承認なら遷移しない(ハンコの実効化)
 - **No-Go 時の処理(A-3)**: ゲート否決(No-Go)の場合は phase を `previous_phase`(審査前のフェーズ)に戻し、`active_gate=null` として差し戻し理由を gate 記録 .md に残す
 
 ---
@@ -567,7 +567,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 ## 13. Company Mode
 
 本プラグインは **JTBC 専用**(かつての startup モードは廃止)。
-`modes/jtbc.yaml` が唯一の実体。mode 切替(set)は無く、`state.json#mode` に常に `"jtbc"` を保持する
+`config/jtbc.yaml` が唯一の実体。mode 切替(set)は無く、`state.json#mode` に常に `"jtbc"` を保持する
 (かつての `/jtbc:mode` 確認コマンドは撤去。情報は本ドキュメント参照)。
 
 将来の拡張余地(未実装): `agile`(PO/SM/Dev)、`oss`(maintainer/contributor/reviewer)、`gov`(統括/設計/実装/監査)。
