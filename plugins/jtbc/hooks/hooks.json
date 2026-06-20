@@ -16,6 +16,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/memory_grant.py",
+            "description": ".jtbc/memory/への書込みを自動承認(settings.json不要)。他役職メモはdeny"
+          },
+          {
+            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/phase_guard.py",
             "description": "現フェーズで編集禁止のパスへのEdit/Writeを阻止"
           },
@@ -38,6 +43,29 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/state_guard.py",
             "description": "フェーズ移行(state.json#phaseの変更)をPMO役職に限定"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/memory_timeline.py",
+            "description": "state.json#phase変更時に.jtbc/memory/_timeline.mdへ決定論的に追記"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/memory_reminder.py",
+            "description": "知識生産役職がメモ未記録のとき随時記録を促す(通知のみ)"
           }
         ]
       }

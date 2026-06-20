@@ -39,10 +39,12 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 - **Commands (4)** — `commands/{init,status,hearing,client-review}.md`(お客様が直接使うのはこの4つのみ)
   - ※ 内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・
     納品物整備・教訓登録などの **社内作業はコマンドではなく `governance` スキルが自動実行** する
-- **Skills (7)** — `governance`(司令塔) / `document-writer` / `customer-relations`(接遇) /
-  `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析)
-- **Hooks (7)** — `hooks/{phase,role,ringi,incident,state,team}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制・
-  フェーズ移行のPMO限定・常駐teammate強制) + `hooks/superior_visit.py`(UserPromptSubmit で上長視察を確率注入)
+- **Skills (8)** — `governance`(司令塔) / `document-writer` / `customer-relations`(接遇) /
+  `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析) / `memory`(役職メモ)
+- **Hooks (11)** — `hooks/{phase,role,ringi,incident,state,team}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制・
+  フェーズ移行のPMO限定・常駐teammate強制) + `hooks/memory_grant.py`(PreToolUse で `.jtbc/memory/` 書込みを自動承認) +
+  `hooks/{superior_visit,approval_sync_guard}.py`(UserPromptSubmit で上長視察・承認転記漏れ通知) +
+  `hooks/memory_timeline.py`(PostToolUse でフェーズ足跡を自動記録) + `hooks/memory_reminder.py`(SubagentStop でメモ記録を促す)
 - **Templates (17)** — `templates/proposal.md` 〜 `completion_approval.md`, `incident_report.md`, `meeting_minutes.md`, `client_review.md`
 - **Config (1)** — `config/jtbc.yaml`(組織構造・フェーズ・ゲート・稟議・会議体・インシデントの正本。JTBC専用でモード切替はない)
 
