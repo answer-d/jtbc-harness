@@ -89,6 +89,9 @@ def main() -> int:
 
     actor = payload.get("agent_type") or payload.get("agent_name") or "main"
     actor = str(actor).split(":")[-1].strip() or "main"
+    # 一発実行 "jtbc:jtbc-kacho" / 常駐 teammate name="kacho" を同じ短名で記録する。
+    if actor.startswith("jtbc-"):
+        actor = actor[len("jtbc-"):]
     ts = datetime.now().isoformat(timespec="seconds")
 
     try:

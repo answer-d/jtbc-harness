@@ -23,11 +23,13 @@ from pathlib import Path
 
 
 def resolve_agent_role(payload: dict) -> str | None:
-    """PreToolUse ペイロードから役職スラッグ (例 "jtbc-kacho") を解決する。
+    """PreToolUse ペイロードから役職を正準短名 (例 "kacho") で解決する。
 
-    Claude Code は subagent 実行時、frontmatter の name を payload.agent_type に
-    渡す。ただしプラグイン提供の agent は名前空間付き (例 "jtbc:jtbc-kacho") で
-    渡る場合があるため、最後の ':' 以降を採用して接頭辞を剥がす。
+    Claude Code が agent_type に渡す値は起動方法で形が異なる:
+    - 一発実行 (subagent_type): 名前空間付き "jtbc:jtbc-kacho"
+    - 常駐 teammate (name 付き Agent): teammate 名そのもの。本プラグインの規約では
+      役職の短名 "kacho"(name は agentType を上書きする / 体制図・memory ディレクトリと一致)
+    両者を同一視するため、名前空間と "jtbc-" 接頭辞の双方を剥がし、短名へ正準化する。
     旧 agent_name/subagent_name は後方互換で残す。
     司令塔(メインセッション)からの書込みは agent_type を持たず None を返す。
     """
@@ -38,7 +40,10 @@ def resolve_agent_role(payload: dict) -> str | None:
     )
     if not raw:
         return None
-    return str(raw).split(":")[-1].strip() or None
+    role = str(raw).split(":")[-1].strip()
+    if role.startswith("jtbc-"):
+        role = role[len("jtbc-"):]
+    return role or None
 
 
 def _debug_payload(payload: dict) -> None:
@@ -66,10 +71,10 @@ def _debug_payload(payload: dict) -> None:
 # cr_type: (path_pattern, 初版作成フェーズ, 初版起案者roles, 承認者roles)
 # 承認者は稟議なしで当該文書を Edit/Write できる(承認印押印・赤入れが職務のため)。
 DOC_PATTERNS = {
-    "proposal": (r"^\.jtbc/proposal/", "PROPOSAL", {"jtbc-kacho"}, {"jtbc-bucho"}),
-    "requirement": (r"^\.jtbc/requirements/", "REQUIREMENTS", {"jtbc-kacho"}, {"jtbc-bucho"}),
-    "design_basic": (r"^\.jtbc/designs/basic_design", "BASIC_DESIGN", {"jtbc-kacho"}, {"jtbc-bucho"}),
-    "design_detailed": (r"^\.jtbc/designs/detailed_design", "DETAILED_DESIGN", {"jtbc-shunin"}, {"jtbc-kacho", "jtbc-bucho"}),
+    "proposal": (r"^\.jtbc/proposal/", "PROPOSAL", {"kacho"}, {"bucho"}),
+    "requirement": (r"^\.jtbc/requirements/", "REQUIREMENTS", {"kacho"}, {"bucho"}),
+    "design_basic": (r"^\.jtbc/designs/basic_design", "BASIC_DESIGN", {"kacho"}, {"bucho"}),
+    "design_detailed": (r"^\.jtbc/designs/detailed_design", "DETAILED_DESIGN", {"shunin"}, {"kacho", "bucho"}),
 }
 
 

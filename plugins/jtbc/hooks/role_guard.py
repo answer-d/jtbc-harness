@@ -27,10 +27,10 @@ from pathlib import Path
 
 
 def resolve_agent_role(payload: dict) -> str | None:
-    """PreToolUse ペイロードから役職スラッグ (例 "jtbc-kacho") を解決する。
+    """PreToolUse ペイロードから役職を正準短名 (例 "kacho") で解決する。
 
-    プラグイン提供 agent は名前空間付き (例 "jtbc:jtbc-kacho") で agent_type に
-    渡る場合があるため、最後の ':' 以降を採用して接頭辞を剥がす。
+    agent_type の形は起動方法で異なる(一発実行は "jtbc:jtbc-kacho"、常駐 teammate は
+    name=短名 "kacho")。名前空間と "jtbc-" 接頭辞を剥がして短名へ正準化し、両者を同一視する。
     司令塔(メインセッション)は agent_type を持たず None を返す → 本ガードは素通り。
     """
     raw = (
@@ -40,42 +40,45 @@ def resolve_agent_role(payload: dict) -> str | None:
     )
     if not raw:
         return None
-    return str(raw).split(":")[-1].strip() or None
+    role = str(raw).split(":")[-1].strip()
+    if role.startswith("jtbc-"):
+        role = role[len("jtbc-"):]
+    return role or None
 
 
 # コードを書くロール(active_wbs_task が必要)。主任もテックリードとして実装可。
-IMPLEMENTER_ROLES = {"jtbc-tantou", "jtbc-ses", "jtbc-shunin"}
+IMPLEMENTER_ROLES = {"tantou", "ses", "shunin"}
 
 ROLE_RULES: dict[str, dict[str, list[str]]] = {
-    "jtbc-shacho": {
+    "shacho": {
         "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/lessons/", r"^\.jtbc/gates/", r"^\.jtbc/deliverables/completion_approval", r"^\.jtbc/incidents/.*report.*"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/wbs/"],
     },
-    "jtbc-bucho": {
+    "bucho": {
         "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/"],
     },
-    "jtbc-pmo": {
+    "pmo": {
         # PMO: プロセスの門番。phase 移行の正本管理(state.json)と PM プロセス文書を扱う。
         # 提案/要件/設計の起案・改訂はしない(課長/主任の領域)。コードも書かない。
         "allow": [r"^\.jtbc/state\.json", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/gates/", r"^\.jtbc/issues/", r"^\.jtbc/deliverables/", r"^\.jtbc/lessons/", r"^\.jtbc/minutes/", r"^\.jtbc/changes/pending/"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/proposal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/"],
     },
-    "jtbc-kacho": {
+    "kacho": {
         "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/risks/", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/designs/detailed_design"],
     },
-    "jtbc-shunin": {
+    "shunin": {
         # テックリードとして実装も可。コードは active_wbs_task の範囲内かつ実装系フェーズのみ
         # (phase_guard / WBSチェックで制御)。
         "allow": [r"^\.jtbc/designs/detailed_design", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_plan", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^src/", r"^lib/", r"^app/", r"^tests/"],
         "deny": [r"^pkg/", r"^internal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/"],
     },
-    "jtbc-tantou": {
+    "tantou": {
         "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/changes/pending/", r"^\.jtbc/issues/", r"^\.jtbc/minutes/"],
         "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/"],
     },
-    "jtbc-ses": {
+    "ses": {
         # 外注SES: 担当と同等のコード権限。ただしガバナンス文書は稟議/課題起票以外触れない。
         "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/issues/"],
         "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/gates/", r"^\.jtbc/changes/", r"^\.jtbc/minutes/", r"^\.jtbc/incidents/"],

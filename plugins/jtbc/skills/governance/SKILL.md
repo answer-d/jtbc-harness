@@ -162,8 +162,12 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
 ### 役職識別と物理ガバナンス (チーム/サブエージェント共通・無改修で有効)
 
 - teammate / サブエージェントがツールを呼ぶたびに、PreToolUse フック(`role_guard` / `ringi_guard` /
-  `phase_guard` / `incident_guard`)が payload の **`agent_type`**(= frontmatter の name、例 `jtbc-kacho`)で
-  役職を識別し、「触ってよいパス」「初版起案の許可」「フェーズ制約」を **物理的に強制** する。
+  `phase_guard` / `incident_guard`)が payload の **`agent_type`** で役職を識別し、「触ってよいパス」
+  「初版起案の許可」「フェーズ制約」を **物理的に強制** する。
+  ※ `agent_type` の形は起動方法で異なる: 一発実行は名前空間付き `jtbc:jtbc-kacho`、常駐 teammate は
+    **teammate 名がそのまま乗る**(本プラグインの規約では役職の**短名** `kacho`。`name` は `agentType` を
+    上書きするため。実機 meta.json で確認済み)。フック側は名前空間と `jtbc-` 接頭辞の双方を剥がして
+    **正準短名 `kacho` に統一**して判定するので、どちらの起動でも同じ役職として扱われる。
   ※ teammate は別インスタンスだが、PreToolUse payload に `agent_type` が乗り、exit 2 による
     ブロックも届く(実機確認済み)。**チーム化してもガバナンスは無改修で効く**。
 - 司令塔(lead 自身=agent_type 無し)が直接ガバナンス文書を書くと `ringi_guard` が初版起案を

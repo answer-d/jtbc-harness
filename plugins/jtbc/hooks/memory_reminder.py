@@ -25,7 +25,7 @@ from pathlib import Path
 
 # メモを残す価値が高い「知識生産」役職。実装のみの担当/SES や、
 # 日常運営に口を出さない社長は除外(雑音を避ける)。
-KNOWLEDGE_ROLES = {"jtbc-kacho", "jtbc-shunin", "jtbc-bucho", "jtbc-pmo"}
+KNOWLEDGE_ROLES = {"kacho", "shunin", "bucho", "pmo"}
 
 
 def main() -> int:
@@ -44,11 +44,14 @@ def main() -> int:
     )
     if not actor:
         return 0
+    # 役職を正準短名へ(一発実行 "jtbc:jtbc-kacho" / 常駐 teammate name="kacho" の双方)。
     actor = str(actor).split(":")[-1].strip()
+    if actor.startswith("jtbc-"):
+        actor = actor[len("jtbc-"):]
     if actor not in KNOWLEDGE_ROLES:
         return 0
 
-    role_short = actor[len("jtbc-"):]
+    role_short = actor
     cwd = Path(payload.get("cwd", "."))
     mem_dir = cwd / ".jtbc" / "memory" / role_short
 
