@@ -113,5 +113,5 @@ model: sonnet
 - **`shutdown_request` を受信したら**: 作業途中でも他の依頼より優先して中断し、`SendMessage` で送信元へ
   `shutdown_response`(受信した `request_id` をそのまま echo・`approve: true`)を返す。これで自分のプロセスが
   終了する。idle のまま握りつぶさない。
-- lead は `TaskStop`(spawn 時の task_id 指定)で強制終了することもある。どちらの経路でも抵抗しない。
+- in_process teammate に `TaskStop` は効かない(harness 仕様)。解散は上記 `shutdown_request` への応答で行う。求められたら速やかに応じ、抵抗しない。
 - **自分から `shutdown_request` を発しない**(部下を持たないため不要)。

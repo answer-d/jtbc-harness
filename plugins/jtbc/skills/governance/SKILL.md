@@ -132,13 +132,18 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
   共有してから再開する。
 - **【解散手順】PJ 完了時・ユーザーの停止指示時は lead が teammate を確実に終了させる**:
   常駐 teammate は idle(`came to rest`)でもプロセスが生きているため、放置すると残り続ける。解散は **lead が** 行う。
-  - **既定: `TaskStop`(spawn 時に得た task_id を指定)** で各 teammate を終了させる。これは相手の協力を
-    要さない harness レベルの強制終了で、idle でも確実に止まる。**spawn のたびに返る task_id を控えておく**。
-  - フォールバック(legacy): `SendMessage` で `{"type":"shutdown_request","reason":...}` を送ると、teammate が
-    `shutdown_response`(approve:true)を返した時点で終了する(各役職定義の「チーム解散・シャットダウン」節)。
-    協調的だが、idle teammate も自動で受信・起床して応答するため通常は機能する。**確実性は `TaskStop` が上**。
-  - ユーザーから「停止してほしい」「エージェントが多すぎる」等の指示が来たら、**まず `TaskList` で現在の
-    background task を把握し、不要な teammate を `TaskStop` で順に終了** させてから状況を報告する。
+  - **`TaskStop` は in_process teammate には効かない**(E2E 2回で確認)。in_process teammate は background
+    task として登録されず(`TaskList` は列挙しない)、spawn 返り値も `task_id` を持たない(`agent_id` のみ)。
+    agent_id を渡しても `No task found` で失敗する。`TaskStop` は background の bash/subagent タスク専用。
+  - **in_process teammate の唯一確実な解散 = 協調シャットダウン**: `SendMessage` で当該 teammate へ
+    `{"type":"shutdown_request","reason":...}` を送る。teammate が `shutdown_response`(approve:true)を返して
+    自プロセスを終了する(各役職定義の「チーム解散・シャットダウン」節)。idle teammate もメッセージで起床し
+    応答する(E2E 実測: idle で ~1s、busy だと数〜十数秒)。
+  - **「送って終わり」にせず確認する**: shutdown_request 送信後、`~/.claude/teams/session-*/config.json` の
+    `members` から当該 teammate(`name`/`agentId`)が消えるまで**ポーリングで待つ**(タイムアウト付き。固定 sleep に
+    しない)。在席の把握も同 config の members を読む(列挙する公式ツールは無い)。
+  - ユーザーから「停止してほしい」「エージェントが多すぎる」等の指示が来たら、**config#members で在席を把握し、
+    不要な teammate へ順に `shutdown_request` を送って** members から消えたのを確認してから状況を報告する。
 
 ### 【最重要】Human Gateway: 生対話はリード、teammate の質問はリードへ集約
 
