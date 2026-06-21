@@ -27,7 +27,7 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
   - ※ **PMO `jtbc-pmo` はプロセスの門番**(PMBOK)。**フェーズ移行(`state.json#phase` 書換)を行える唯一の役職**で、
     ゲート承認・必要書類・客先承認を機械検証してから工程を進める(`state_guard` が物理担保)。受注後の
     立ち上げ・計画(PJ計画書/リスク登録簿/WBS骨子)を実作業前に主導する。成果物の品質承認(押印)はしない。
-  - ※ **運用は常駐エージェントチーム(Agent Teams)が基本**。司令塔(営業)が lead、各役職が常駐 teammate。
+  - ※ **運用はフェーズ単位エージェントチーム(Agent Teams)が基本**。司令塔(営業)が lead(継続)、各フェーズの実働役職を teammate として起こしゲート通過で畳む。
     `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` を `settings.json` に設定して有効化する(無効なら都度起動の
     サブエージェントへ自動フォールバック)。詳細は `DESIGN.md §1.4` / `skills/governance/SKILL.md`。
   - ※ **客対の一次窓口は「営業」= メインセッション(司令塔=lead)の客対人格** で、teammate ではない
@@ -42,7 +42,7 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 - **Skills (8)** — `governance`(司令塔) / `document-writer` / `customer-relations`(接遇) /
   `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析) / `role-memory`(役職メモ)
 - **Hooks (11)** — `hooks/{phase,role,ringi,incident,state,team}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制・
-  フェーズ移行のPMO限定・常駐teammate強制) + `hooks/memory_grant.py`(PreToolUse で `.jtbc/memory/` 書込みを自動承認) +
+  フェーズ移行のPMO限定・teammate 起動強制) + `hooks/memory_grant.py`(PreToolUse で `.jtbc/memory/` 書込みを自動承認) +
   `hooks/{superior_visit,approval_sync_guard}.py`(UserPromptSubmit で上長視察・承認転記漏れ通知) +
   `hooks/memory_timeline.py`(PostToolUse でフェーズ足跡を自動記録) + `hooks/memory_reminder.py`(SubagentStop でメモ記録を促す)
 - **Templates (17)** — `templates/proposal.md` 〜 `completion_approval.md`, `incident_report.md`, `meeting_minutes.md`, `client_review.md`

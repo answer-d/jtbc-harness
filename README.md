@@ -54,11 +54,11 @@
 - **インシデント対応** — お客様の申告/検知を起点に司令塔が **自動起動**(緊急報告 → 定期報告 → なぜなぜ分析 → 障害報告書)
 - **工程内遷移・納品物整備・教訓登録・役職振り分け** — いずれも司令塔が **自動実行**(お客様は操作しない)
 - **顧客接遇** — 受注御礼・進捗報告・お詫びを丁重な敬語で
-- **エージェントチーム(常駐役職)** — 6役職を常駐 teammate として運用し、記憶・一貫性・報連相を実体化(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`。無効時はサブエージェントへフォールバック)
-- **権限分離フック** — phase_guard / role_guard / ringi_guard / state_guard / team_guard が違反を物理的に阻止(常駐 teammate にも `agent_type` 経由で有効)
-- **常駐チーム強制(team_guard)** — teams 有効環境で役職を一発実行(`subagent_type` のみ)で spawn しようとすると物理ブロックし、`run_in_background`+`name` の常駐 teammate 起動へ誘導(プロンプトでは止まらない退化を物理担保)
+- **エージェントチーム(フェーズ単位役職)** — 各フェーズの実働役職を teammate として起こし、**ゲート通過で畳む**(継続はディスクの役職メモが担う)。記憶・一貫性・報連相を実体化(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`。無効時はサブエージェントへフォールバック)
+- **権限分離フック** — phase_guard / role_guard / ringi_guard / state_guard / team_guard が違反を物理的に阻止(teammate にも `agent_type` 経由で有効)
+- **teammate 起動強制(team_guard)** — teams 有効環境で役職を一発実行(`subagent_type` のみ)で spawn しようとすると物理ブロックし、`run_in_background`+`name` の teammate 起動へ誘導(プロンプトでは止まらない退化を物理担保)
 - **PMO(プロセスの門番)** — フェーズ移行(`state.json#phase` 書換)を PMO に限定(`state_guard`)。受注後の計画整備(PJ計画書/リスク登録簿/WBS骨子)を実作業前に主導し、審査スキップ・空文書のまま前進する逸脱を防ぐ
-- **役職メモ(永続記憶)** — 各役職が `.jtbc/memory/<役職>/` に学びを蓄積し、起動時に読み直して文脈を再構築(揮発的な作業記憶を補完。常駐/サブエージェント・`/resume`・セッション終了をまたいで残る)。書込みは `memory_grant` フックが**自動承認**(settings 不要)、フェーズの足跡は `memory_timeline` が自動記録。詳細は `skills/role-memory/SKILL.md`
+- **役職メモ(永続記憶)** — 各役職が `.jtbc/memory/<役職>/` に学びを蓄積し、起動時に読み直して文脈を再構築(揮発的な作業記憶を補完。フェーズ・teammate/サブエージェント・`/resume`・セッション終了をまたいで残る。フェーズ単位運用ではフェーズ間継続の生命線)。書込みは `memory_grant` フックが**自動承認**(settings 不要)、フェーズの足跡は `memory_timeline` が自動記録。詳細は `skills/role-memory/SKILL.md`
 
 ## クイックスタート
 
@@ -77,11 +77,11 @@ mkdir -p ~/.claude/plugins
 ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
 ```
 
-### C. エージェントチーム(常駐役職)を有効化【推奨】
+### C. エージェントチーム(フェーズ単位役職)を有効化【推奨】
 
-役職を **常駐エージェントチーム** として動かすと、各役職が記憶と一貫性を保ち、報連相が実体を持ちます。
-`settings.json` に実験フラグを追加してください(未設定でも動きますが、その場合は役職が都度起動の
-サブエージェントになり、記憶は継続しません)。
+役職を **フェーズ単位のエージェントチーム** として動かすと、各役職が(ディスクの役職メモ経由で)文脈を保ち、
+報連相が実体を持ちます。`settings.json` に実験フラグを追加してください(未設定でも動きますが、その場合は
+役職が都度起動のサブエージェントになり、記憶はメモ経由のみになります)。
 
 ```json
 // ~/.claude/settings.json
@@ -96,8 +96,9 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
   セッション)が直接**担当し、teammate にはお客様対応を渡さない(確実・滑らか)。teams は **裏方の並行作業**
   (起案・審査・並行承認・設計)に使う。裏方の役職がお客様の判断を要するときは、質問を営業へ集約し、
   **営業がまとめてお客様へ確認**する。
-- **既知の制約(research preview)**: `/resume` でチームは復元されない(再開時に司令塔が役職を再 spawn)。
-  6役職常駐はトークン消費が大きい(出番が来た役職だけ起こす遅延常駐で緩和)。
+- **既知の制約(research preview)**: `/resume` でチームは復元されない(再開時に司令塔が現フェーズの役職を再 spawn)。
+  同時に生きるのは **現フェーズのチームだけ**(ゲート通過で畳む)なのでトークン消費を抑えられる。teammate は
+  `Done` でも自然終了しないため、解散は lead からの `shutdown_request` で行う(`TaskStop` は in_process に効かない)。
 
 ### 使い始め
 
