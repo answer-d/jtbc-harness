@@ -406,3 +406,58 @@ def test_approval_sync_passes_without_gates(project):
     p = project(phase="PROPOSAL", approvals={})
     r = run_hook("approval_sync_guard", p.payload())
     assert r.passed and r.stdout.strip() == ""
+
+
+# ---------------------------------------------------------------------------
+# 常駐 teammate 起動の役職正準化(回帰: name 付き Agent では agent_type に短名が入る)
+#
+# `Agent(name="kacho", agentType="jtbc:jtbc-kacho")` で teammate を起こすと、
+# name が agentType を上書きし PreToolUse payload の agent_type は短名 "kacho" になる
+# (実機 meta.json で確認済み)。一発実行 "jtbc:jtbc-kacho" と同一視されないと、
+# 起案者判定に乗れず提案書初版がブロックされる不具合を踏む。短名/接頭辞付き/名前空間付きの
+# いずれの形でも同じ役職として扱われることを各ガードで固定する。
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("agent_type", ["kacho", "jtbc-kacho", "jtbc:jtbc-kacho"])
+def test_ringi_guard_allows_drafter_regardless_of_launch_form(project, agent_type):
+    """起案フェーズの課長は、teammate 短名でも一発実行でも初版を書ける。"""
+    from conftest import run_hook
+    p = project(phase="PROPOSAL")
+    payload = p.payload(agent_type=agent_type, tool_name="Write",
+                        tool_input={"file_path": ".jtbc/proposal/proposal.md"})
+    r = run_hook("ringi_guard", payload)
+    assert r.passed, f"{agent_type} がブロックされた: {r.stderr}"
+
+
+def test_ringi_guard_allows_approver_teammate_short_name(project):
+    """承認者(部長)も teammate 短名 "bucho" で押印できる。"""
+    from conftest import run_hook
+    p = project(phase="PROPOSAL")
+    payload = p.payload(agent_type="bucho", tool_name="Edit",
+                        tool_input={"file_path": ".jtbc/proposal/proposal.md"})
+    r = run_hook("ringi_guard", payload)
+    assert r.passed, r.stderr
+
+
+@pytest.mark.parametrize("agent_type", ["kacho", "jtbc-kacho", "jtbc:jtbc-kacho"])
+def test_role_guard_enforces_regardless_of_launch_form(project, agent_type):
+    """role_guard は teammate 短名でも禁止パスを止める(短名で素通りさせない)。"""
+    from conftest import run_hook
+    p = project()
+    payload = p.payload(agent_type=agent_type, tool_name="Write",
+                        tool_input={"file_path": ".jtbc/designs/detailed_design.md"})
+    r = run_hook("role_guard", payload)
+    assert r.blocked and "[role_guard]" in r.stderr
+
+
+def test_state_guard_allows_pmo_teammate_short_name(project):
+    """PMO を teammate 短名 "pmo" で起こしてもフェーズ移行できる。"""
+    from conftest import run_hook
+    p = project(**_proposal_ready_state())
+    p.write_doc(".jtbc/proposal/proposal.md", "# 提案書\n実内容あり")
+    new_state = _proposal_ready_state(phase="REQUIREMENTS")
+    payload = p.payload(agent_type="pmo", tool_name="Write",
+                        tool_input={"file_path": ".jtbc/state.json",
+                                    "content": json.dumps(new_state, ensure_ascii=False)})
+    r = run_hook("state_guard", payload)
+    assert r.passed, r.stderr

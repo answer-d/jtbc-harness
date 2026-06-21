@@ -26,7 +26,7 @@ import re
 import sys
 from pathlib import Path
 
-PMO_ROLE = "jtbc-pmo"
+PMO_ROLE = "pmo"
 PHASE_RE = re.compile(r'"phase"\s*:\s*"([A-Z_]+)"')
 
 # 移行先 phase ごとの事前条件(config/jtbc.yaml#gates を正とする写し)。
@@ -72,6 +72,11 @@ GENERIC_STUB = "{{"
 
 
 def resolve_agent_role(payload: dict) -> str | None:
+    """役職を正準短名 (例 "pmo") で解決する。
+
+    agent_type は起動方法で形が異なる(一発実行 "jtbc:jtbc-pmo" / 常駐 teammate は name=短名 "pmo")。
+    名前空間と "jtbc-" 接頭辞を剥がして短名へ正準化し、両者を同一視する。
+    """
     raw = (
         payload.get("agent_type")
         or payload.get("agent_name")
@@ -79,7 +84,10 @@ def resolve_agent_role(payload: dict) -> str | None:
     )
     if not raw:
         return None
-    return str(raw).split(":")[-1].strip() or None
+    role = str(raw).split(":")[-1].strip()
+    if role.startswith("jtbc-"):
+        role = role[len("jtbc-"):]
+    return role or None
 
 
 def _phase_from_text(text: str) -> str | None:
