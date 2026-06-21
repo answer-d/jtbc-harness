@@ -21,9 +21,35 @@ state.json#active_wbs_task が割り当てられているかを照合する。
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
+
+_HOOK = "role_guard"
+
+
+def _debug_log(payload: dict, *, decision: str, role: str | None = None, reason: str = "") -> None:
+    """JTBC_HOOK_DEBUG 設定時のみ、判定結果を .jtbc/hook_debug.log に1行記録する(調査用)。"""
+    if not os.environ.get("JTBC_HOOK_DEBUG"):
+        return
+    try:
+        cwd = Path(payload.get("cwd", "."))
+        log = cwd / ".jtbc" / "hook_debug.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        tool_input = payload.get("tool_input") or {}
+        with log.open("a") as f:
+            f.write(json.dumps({
+                "hook": _HOOK,
+                "decision": decision,
+                "role": role,
+                "agent_type": payload.get("agent_type"),
+                "tool_name": payload.get("tool_name"),
+                "file_path": tool_input.get("file_path") or tool_input.get("path"),
+                "reason": reason,
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 
 def resolve_agent_role(payload: dict) -> str | None:
@@ -118,6 +144,7 @@ def main() -> int:
         return 0
 
     if match_any(rules["deny"], relative):
+        _debug_log(payload, decision="block", role=agent_name, reason="deny パターン一致")
         print(
             f"[role_guard] BLOCKED: 役職 '{agent_name}' は '{relative}' への書込みが禁止されています。\n"
             f"役職の振り分けは司令塔が自動で行います(governance スキル)。\n"
@@ -127,6 +154,7 @@ def main() -> int:
         return 2
 
     if rules["allow"] and not match_any(rules["allow"], relative):
+        _debug_log(payload, decision="block", role=agent_name, reason="allow 許可リスト外")
         print(
             f"[role_guard] BLOCKED: 役職 '{agent_name}' の許可パス一覧に '{relative}' は含まれません。\n"
             f"許可されているパスパターン: {rules['allow']}",
@@ -144,6 +172,7 @@ def main() -> int:
             active = state.get("active_wbs_task")
             is_code_path = any(re.search(p, relative) for p in [r"^src/", r"^lib/", r"^app/"])
             if is_code_path and not active:
+                _debug_log(payload, decision="block", role=agent_name, reason="WBS 未割当でコード編集")
                 print(
                     f"[role_guard] BLOCKED: 実装担当 '{agent_name}' は WBSタスクが active でない状態でコードを編集できません。\n"
                     "主任に active_wbs_task を割り当ててもらってください。",
@@ -151,6 +180,7 @@ def main() -> int:
                 )
                 return 2
 
+    _debug_log(payload, decision="allow", role=agent_name, reason="役職の許可パス内")
     return 0
 
 

@@ -22,12 +22,37 @@ state_guard.py — JTBC PreToolUse hook
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 PMO_ROLE = "pmo"
 PHASE_RE = re.compile(r'"phase"\s*:\s*"([A-Z_]+)"')
+_HOOK = "state_guard"
+
+
+def _debug_log(payload: dict, *, decision: str, role: str | None = None, reason: str = "") -> None:
+    """JTBC_HOOK_DEBUG 設定時のみ、判定結果を .jtbc/hook_debug.log に1行記録する(調査用)。"""
+    if not os.environ.get("JTBC_HOOK_DEBUG"):
+        return
+    try:
+        cwd = Path(payload.get("cwd", "."))
+        log = cwd / ".jtbc" / "hook_debug.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        tool_input = payload.get("tool_input") or {}
+        with log.open("a") as f:
+            f.write(json.dumps({
+                "hook": _HOOK,
+                "decision": decision,
+                "role": role,
+                "agent_type": payload.get("agent_type"),
+                "tool_name": payload.get("tool_name"),
+                "file_path": tool_input.get("file_path") or tool_input.get("path"),
+                "reason": reason,
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 # 移行先 phase ごとの事前条件(config/jtbc.yaml#gates を正とする写し)。
 # gate: ゲート名 / approvers: 全員 approved が必要な承認者役職 /
@@ -221,6 +246,8 @@ def main() -> int:
     state_after = _resulting_state(tool_name, tool_input, on_disk)
     reason = _check_transition_preconditions(state_after, new_phase, cwd)
     if reason is not None:
+        _debug_log(payload, decision="block", role=resolve_agent_role(payload),
+                   reason=f"事前条件未充足({current_phase}→{new_phase}): {reason}")
         print(
             f"[state_guard] BLOCKED: フェーズ移行(phase: {current_phase} → {new_phase})の事前条件を満たしていません。\n"
             f"理由: {reason}。\n"
@@ -233,8 +260,12 @@ def main() -> int:
     # (A) 権限: phase を変えられるのは PMO のみ。
     agent_name = resolve_agent_role(payload)
     if agent_name == PMO_ROLE:
+        _debug_log(payload, decision="allow", role=agent_name,
+                   reason=f"PMO によるフェーズ移行({current_phase}→{new_phase})")
         return 0
 
+    _debug_log(payload, decision="block", role=agent_name,
+               reason=f"PMO 以外のフェーズ移行({current_phase}→{new_phase})")
     print(
         f"[state_guard] BLOCKED: フェーズ移行(phase: {current_phase} → {new_phase})は PMO のみが実行できます。\n"
         f"フェーズ移行は PMBOK に沿ったプロセス検証(ゲート承認の充足・必要書類の整備・客先承認)を経て、\n"
