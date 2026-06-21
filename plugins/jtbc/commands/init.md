@@ -144,10 +144,11 @@ argument-hint: "[project-name]"
    (お客様との生対話はリードが直接。teammate に渡さない。即レス・中継なし)。
    共通理解が取れたら、合意内容を **裏方の課長へ引き渡して** 提案書を起案させる(営業は起案しない。
    `ringi_guard` 対象外の提案書も委譲が原則)。
-   **【teams有効時(既定)】課長は Agent Team の常駐メンバーとして起こす**:`Agent` を
+   **【teams有効時(既定)】課長を提案フェーズのメンバーとして起こす**:`Agent` を
    `run_in_background: true` + `name: "kacho"`(ASCII 必須・後述) + `agentType: "jtbc:jtbc-kacho"` で呼び、以後の指示は
-   同じ teammate へ `SendMessage` で送る(PJ完了まで shutdown しない)。**`subagent_type` 指定だけの
-   一発実行はしない**(コールドスタートで毎回別人格になり teammate 連携が起きないため)。
+   同じ teammate へ `SendMessage` で送る(**提案フェーズのゲート通過まで生かし、ゲートで引き継ぎメモ →
+   `shutdown_request` で畳む**。チーム運用は governance「フェーズ・ライフサイクル」が正本)。**`subagent_type` 指定
+   だけの一発実行はしない**(コールドスタートで毎回別人格になり teammate 連携が起きないため)。
    **【teams無効時のみ】** フォールバックとして `subagent_type: "jtbc:jtbc-kacho"` の一発実行に切り替える。
    課長が起案中にお客様の判断を要する点に当たったら、**お客様に直接聞かず営業へ質問を上げ、営業が
    まとめてお客様へ確認** する(governance「Human Gateway」)。
