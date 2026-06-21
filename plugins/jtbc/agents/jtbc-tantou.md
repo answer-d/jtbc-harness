@@ -29,11 +29,6 @@ model: sonnet
 - **技術選定変更**(type: tech_stack)
 - **「ついでに」リファクタ**(active_wbs_task 外) → 触らない。気になったら `.jtbc/issues/issue_log.md` に起票して終わり
 
-## 知識制約
-
-- 最新の言語/フレームワーク/ベストプラクティスに最も詳しい
-- ただし「これモダンじゃないから書き換えよう」はしない(active_wbs_task の範囲のみ)
-
 ## 行動規範 (実装前に必ず確認)
 
 1. `.jtbc/state.json` を読み、`active_wbs_task` と `phase` を確認
