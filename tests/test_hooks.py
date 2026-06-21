@@ -461,3 +461,71 @@ def test_state_guard_allows_pmo_teammate_short_name(project):
                                     "content": json.dumps(new_state, ensure_ascii=False)})
     r = run_hook("state_guard", payload)
     assert r.passed, r.stderr
+
+
+# ---------------------------------------------------------------------------
+# JTBC_HOOK_DEBUG: 各ガードの判定(allow/block)を .jtbc/hook_debug.log に記録
+#   切り分け用。env 未設定では一切書かない(本番ノイズ無し)。
+# ---------------------------------------------------------------------------
+
+def _read_debug_log(root):
+    import json as _json
+    from pathlib import Path as _Path
+    p = _Path(root) / ".jtbc" / "hook_debug.log"
+    if not p.exists():
+        return []
+    return [_json.loads(line) for line in p.read_text().splitlines() if line.strip()]
+
+
+def test_debug_log_records_block_with_role(project):
+    """debug on のとき、ブロックが hook 名・decision・正準短名 role 付きで残る。"""
+    from conftest import run_hook
+    p = project(phase="BASIC_DESIGN")  # 起案フェーズ外 → 改訂は稟議要 → block
+    payload = p.payload(agent_type="kacho", tool_name="Edit",
+                        tool_input={"file_path": ".jtbc/requirements/requirements.md"})
+    r = run_hook("ringi_guard", payload, env={"JTBC_HOOK_DEBUG": "1"})
+    assert r.blocked
+    rows = _read_debug_log(p.root)
+    assert any(
+        x["hook"] == "ringi_guard" and x["decision"] == "block" and x["role"] == "kacho"
+        for x in rows
+    ), rows
+
+
+def test_debug_log_records_allow(project):
+    """allow 判定も記録される(起案者の初版)。"""
+    from conftest import run_hook
+    p = project(phase="PROPOSAL")
+    payload = p.payload(agent_type="kacho", tool_name="Write",
+                        tool_input={"file_path": ".jtbc/proposal/proposal.md"})
+    r = run_hook("ringi_guard", payload, env={"JTBC_HOOK_DEBUG": "1"})
+    assert r.passed
+    rows = _read_debug_log(p.root)
+    assert any(x["decision"] == "allow" and x["role"] == "kacho" for x in rows), rows
+
+
+def test_debug_log_silent_without_env(project):
+    """env 未設定では hook_debug.log を作らない(本番でノイズを残さない)。"""
+    from conftest import run_hook
+    p = project(phase="BASIC_DESIGN")
+    payload = p.payload(agent_type="kacho", tool_name="Edit",
+                        tool_input={"file_path": ".jtbc/requirements/requirements.md"})
+    r = run_hook("ringi_guard", payload)  # env なし(conftest が DEBUG を除去)
+    assert r.blocked
+    assert _read_debug_log(p.root) == []
+
+
+def test_debug_log_state_guard_block(project):
+    """state_guard も非 PMO のフェーズ移行を記録する。"""
+    from conftest import run_hook
+    import json as _json
+    p = project(**_proposal_ready_state())
+    p.write_doc(".jtbc/proposal/proposal.md", "# 提案書\n実内容あり")
+    new_state = _proposal_ready_state(phase="REQUIREMENTS")
+    payload = p.payload(agent_type="kacho", tool_name="Write",
+                        tool_input={"file_path": ".jtbc/state.json",
+                                    "content": _json.dumps(new_state, ensure_ascii=False)})
+    r = run_hook("state_guard", payload, env={"JTBC_HOOK_DEBUG": "1"})
+    assert r.blocked
+    rows = _read_debug_log(p.root)
+    assert any(x["hook"] == "state_guard" and x["decision"] == "block" for x in rows), rows

@@ -12,6 +12,7 @@ incident_guard.py — JTBC PreToolUse hook
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -20,6 +21,31 @@ from pathlib import Path
 BLOCKED_IN_INCIDENT = re.compile(
     r"^\.jtbc/(proposal|requirements|designs|plans|wbs)/"
 )
+
+_HOOK = "incident_guard"
+
+
+def _debug_log(payload: dict, *, decision: str, role: str | None = None, reason: str = "") -> None:
+    """JTBC_HOOK_DEBUG 設定時のみ、判定結果を .jtbc/hook_debug.log に1行記録する(調査用)。"""
+    if not os.environ.get("JTBC_HOOK_DEBUG"):
+        return
+    try:
+        cwd = Path(payload.get("cwd", "."))
+        log = cwd / ".jtbc" / "hook_debug.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        tool_input = payload.get("tool_input") or {}
+        with log.open("a") as f:
+            f.write(json.dumps({
+                "hook": _HOOK,
+                "decision": decision,
+                "role": role,
+                "agent_type": payload.get("agent_type"),
+                "tool_name": payload.get("tool_name"),
+                "file_path": tool_input.get("file_path") or tool_input.get("path"),
+                "reason": reason,
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 
 def main() -> int:
@@ -58,6 +84,7 @@ def main() -> int:
     )
 
     if BLOCKED_IN_INCIDENT.search(relative):
+        _debug_log(payload, decision="block", reason=f"緊急対応中の前進系文書編集 active={active_incidents}")
         print(
             f"[incident_guard] BLOCKED: 緊急対応中(INC対応中)につき、"
             f"新規工程のガバナンス文書編集は停止しています。"
@@ -67,6 +94,7 @@ def main() -> int:
         )
         return 2
 
+    _debug_log(payload, decision="allow", reason=f"緊急対応中だが対象外パス active={active_incidents}")
     return 0
 
 

@@ -172,6 +172,11 @@ description: JTBC ガバナンス制御スキル(司令塔)。プロジェクト
     ブロックも届く(実機確認済み)。**チーム化してもガバナンスは無改修で効く**。
 - 司令塔(lead 自身=agent_type 無し)が直接ガバナンス文書を書くと `ringi_guard` が初版起案を
   稟議扱いでブロックする(=委譲を促す安全装置)。**lead は書かず、役職に振る**。
+- **切り分け(調査用)**: 環境変数 `JTBC_HOOK_DEBUG=1` を設定すると、各 PreToolUse ガード
+  (`role_guard` / `ringi_guard` / `phase_guard` / `incident_guard` / `state_guard`)が判定を
+  `.jtbc/hook_debug.log` に1行 JSON で記録する(`hook` / `decision`(allow|block)/ 解決した
+  `role`(正準短名)/ `tool_name` / `file_path` / `reason`)。「どのフックがどの役職で何故止めたか」を
+  後追いできる。既定 off(本番ではログを残さない)。`settings.json` の `env` で有効化する。
 
 ### 作成者≠承認者・表示
 

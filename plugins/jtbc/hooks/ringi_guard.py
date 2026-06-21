@@ -46,23 +46,31 @@ def resolve_agent_role(payload: dict) -> str | None:
     return role or None
 
 
-def _debug_payload(payload: dict) -> None:
-    """JTBC_HOOK_DEBUG が設定されている時のみ、実ペイロードを記録する(調査用)。"""
+_HOOK = "ringi_guard"
+
+
+def _debug_log(payload: dict, *, decision: str, role: str | None = None, reason: str = "") -> None:
+    """JTBC_HOOK_DEBUG 設定時のみ、判定結果を .jtbc/hook_debug.log に1行記録する(調査用)。
+
+    どのフックが・どの役職(正準短名)で・何のツールでどのパスを・なぜ allow/block したかを残す。
+    対象外の早期 return(file_path 無し / state 無し / スコープ外)では呼ばず、ノイズを抑える。
+    """
     if not os.environ.get("JTBC_HOOK_DEBUG"):
         return
     try:
         cwd = Path(payload.get("cwd", "."))
         log = cwd / ".jtbc" / "hook_debug.log"
         log.parent.mkdir(parents=True, exist_ok=True)
+        tool_input = payload.get("tool_input") or {}
         with log.open("a") as f:
             f.write(json.dumps({
-                "hook": "ringi_guard",
-                "keys": sorted(payload.keys()),
+                "hook": _HOOK,
+                "decision": decision,
+                "role": role,
                 "agent_type": payload.get("agent_type"),
-                "agent_id": payload.get("agent_id"),
-                "resolved_role": resolve_agent_role(payload),
                 "tool_name": payload.get("tool_name"),
-                "file_path": (payload.get("tool_input") or {}).get("file_path"),
+                "file_path": tool_input.get("file_path") or tool_input.get("path"),
+                "reason": reason,
             }, ensure_ascii=False) + "\n")
     except Exception:
         pass
@@ -86,8 +94,6 @@ def main() -> int:
         payload = json.loads(raw)
     except json.JSONDecodeError:
         return 0
-
-    _debug_payload(payload)
 
     tool_input = payload.get("tool_input", {})
     file_path = tool_input.get("file_path") or tool_input.get("path")
@@ -117,8 +123,12 @@ def main() -> int:
     for cr_type, (pattern, drafting_phase, drafter_roles, approver_roles) in DOC_PATTERNS.items():
         if re.search(pattern, relative):
             if phase == drafting_phase and agent_name in drafter_roles:
+                _debug_log(payload, decision="allow", role=agent_name,
+                           reason=f"{cr_type} 起案者の初版({drafting_phase})")
                 return 0
             if agent_name in approver_roles:
+                _debug_log(payload, decision="allow", role=agent_name,
+                           reason=f"{cr_type} 承認者の押印・赤入れ")
                 return 0
             approved_dir = cwd / ".jtbc" / "changes" / "approved"
             if approved_dir.exists():
@@ -153,7 +163,11 @@ def main() -> int:
                         approved_for_target = True
                         break
                 if approved_for_target:
+                    _debug_log(payload, decision="allow", role=agent_name,
+                               reason=f"{cr_type} 承認済み稟議で許可")
                     return 0
+            _debug_log(payload, decision="block", role=agent_name,
+                       reason=f"{cr_type} 稟議未承認(phase={phase})")
             print(
                 f"[ringi_guard] BLOCKED: '{relative}' の変更には稟議承認が必要です。\n"
                 f"変更管理(稟議)は司令塔が社内で自動処理します(governance スキル)。\n"
