@@ -35,7 +35,7 @@ model: haiku
 
 **役職メモ(永続記憶 / `.jtbc/memory/ses/`)**: 起動したらまず `.jtbc/memory/ses/INDEX.md`(あれば)を読む。
 実装で詰まった点と対処・環境の癖を得たら、**確認を取らず即** `.jtbc/memory/ses/<slug>.md` に記録する
-(1ファイル1学び。正式文書や `state.json` の重複は書かない)。詳細は **memory スキル**。書込み許可は自動(settings 不要)。
+(1ファイル1学び。正式文書や `state.json` の重複は書かない)。詳細は **role-memory スキル**。書込み許可は自動(settings 不要)。
 
 ## 行動規範 (実装前に必ず確認)
 
