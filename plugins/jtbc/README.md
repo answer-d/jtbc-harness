@@ -40,7 +40,7 @@ ln -s "$(pwd)/plugins/jtbc" ~/.claude/plugins/jtbc
   - ※ 内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・
     納品物整備・教訓登録などの **社内作業はコマンドではなく `governance` スキルが自動実行** する
 - **Skills (8)** — `governance`(司令塔) / `document-writer` / `customer-relations`(接遇) /
-  `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析) / `memory`(役職メモ)
+  `requirements-interview`(要望ヒアリング) / `meetings`(会議体) / `incident-response`(インシデント) / `naze-naze`(なぜなぜ分析) / `role-memory`(役職メモ)
 - **Hooks (11)** — `hooks/{phase,role,ringi,incident,state,team}_guard.py`(PreToolUse で権限分離・フェーズ強制・緊急対応強制・
   フェーズ移行のPMO限定・常駐teammate強制) + `hooks/memory_grant.py`(PreToolUse で `.jtbc/memory/` 書込みを自動承認) +
   `hooks/{superior_visit,approval_sync_guard}.py`(UserPromptSubmit で上長視察・承認転記漏れ通知) +

@@ -58,7 +58,7 @@
 - **権限分離フック** — phase_guard / role_guard / ringi_guard / state_guard / team_guard が違反を物理的に阻止(常駐 teammate にも `agent_type` 経由で有効)
 - **常駐チーム強制(team_guard)** — teams 有効環境で役職を一発実行(`subagent_type` のみ)で spawn しようとすると物理ブロックし、`run_in_background`+`name` の常駐 teammate 起動へ誘導(プロンプトでは止まらない退化を物理担保)
 - **PMO(プロセスの門番)** — フェーズ移行(`state.json#phase` 書換)を PMO に限定(`state_guard`)。受注後の計画整備(PJ計画書/リスク登録簿/WBS骨子)を実作業前に主導し、審査スキップ・空文書のまま前進する逸脱を防ぐ
-- **役職メモ(永続記憶)** — 各役職が `.jtbc/memory/<役職>/` に学びを蓄積し、起動時に読み直して文脈を再構築(揮発的な作業記憶を補完。常駐/サブエージェント・`/resume`・セッション終了をまたいで残る)。書込みは `memory_grant` フックが**自動承認**(settings 不要)、フェーズの足跡は `memory_timeline` が自動記録。詳細は `skills/memory/SKILL.md`
+- **役職メモ(永続記憶)** — 各役職が `.jtbc/memory/<役職>/` に学びを蓄積し、起動時に読み直して文脈を再構築(揮発的な作業記憶を補完。常駐/サブエージェント・`/resume`・セッション終了をまたいで残る)。書込みは `memory_grant` フックが**自動承認**(settings 不要)、フェーズの足跡は `memory_timeline` が自動記録。詳細は `skills/role-memory/SKILL.md`
 
 ## クイックスタート
 

@@ -155,7 +155,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 - **書き忘れの促し**: `memory_reminder`(SubagentStop)が知識役職のメモ未記録を通知(非ブロッキング)。
 - **権限分離**: 各役職は自分の `.jtbc/memory/<役職>/` のみ書ける(他役職メモは `memory_grant` が deny)。
 
-正本は `skills/memory/SKILL.md`。
+正本は `skills/role-memory/SKILL.md`。
 
 ---
 
@@ -185,7 +185,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
   - client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
 - **Skills (8)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析) / memory(役職メモ)
 - **Hooks (11)**: PreToolUse 7種 (memory_grant / phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 2種 (superior_visit / approval_sync_guard) + PostToolUse 1種 (memory_timeline) + SubagentStop 1種 (memory_reminder)
-  - `memory_grant`: `.jtbc/memory/<役職>/` への書込みを **自動承認**(permissionDecision: allow)し、ユーザーが settings.json に許可を書かずとも役職が確認なしでメモを残せる(バックグラウンド・エージェントの自動拒否も回避)。他役職のメモへの書込みは deny。詳細は `skills/memory/SKILL.md`
+  - `memory_grant`: `.jtbc/memory/<役職>/` への書込みを **自動承認**(permissionDecision: allow)し、ユーザーが settings.json に許可を書かずとも役職が確認なしでメモを残せる(バックグラウンド・エージェントの自動拒否も回避)。他役職のメモへの書込みは deny。詳細は `skills/role-memory/SKILL.md`
   - `memory_timeline`: `state.json#phase` 変更時に `.jtbc/memory/_timeline.md` へ「実時刻・役職・新フェーズ」を冪等に追記(決定論的タイムライン)
   - `memory_reminder`: 知識生産役職(課長/主任/部長/PMO)がメモ未記録のまま応答を終えたとき、随時記録を促す(通知のみ・非ブロッキング)
   - `team_guard`: teams 有効環境(`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`)で jtbc 役職を一発実行(`subagent_type` のみ・`run_in_background` 無し)で spawn しようとすると物理ブロックし、常駐 teammate 起動へ誘導(司令塔の「一発実行への退化」を物理担保。teams 無効環境では素通り)
