@@ -6,17 +6,15 @@ role_guard.py — JTBC PreToolUse hook
 「触ってよいパス」「触ってはいけないパス」を強制する。
 
 役職判定は payload.agent_type (Claude Code が PreToolUse に渡す
-subagent の frontmatter name) を見る。例: "jtbc-shacho", "jtbc-tantou", "jtbc-ses"。
+subagent の frontmatter name) を見る。例: "jtbc-shacho", "jtbc-tantou"。
 ※ 司令塔(メインセッション)からの書込みは agent_type を持たないため
   本ガードは素通りする(役職振り分けはサブエージェント起動が前提)。
 
 ルール: agents/jtbc-<role>.md の冒頭で記述している禁止/許可パスを
 本ファイル内のテーブル ROLE_RULES に映している。
 
-実装担当 (jtbc-tantou / jtbc-ses) の場合は追加で
+実装担当 (jtbc-tantou) の場合は追加で
 state.json#active_wbs_task が割り当てられているかを照合する。
-外注SES (jtbc-ses) は担当と同じファイル権限だが、設計/要件/計画系の
-ドキュメントには一切触れない(常に課長以下の指示でコードのみを扱う)。
 """
 from __future__ import annotations
 
@@ -73,7 +71,7 @@ def resolve_agent_role(payload: dict) -> str | None:
 
 
 # コードを書くロール(active_wbs_task が必要)。主任もテックリードとして実装可。
-IMPLEMENTER_ROLES = {"tantou", "ses", "shunin"}
+IMPLEMENTER_ROLES = {"tantou", "shunin"}
 
 ROLE_RULES: dict[str, dict[str, list[str]]] = {
     "shacho": {
@@ -103,11 +101,6 @@ ROLE_RULES: dict[str, dict[str, list[str]]] = {
     "tantou": {
         "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/changes/pending/", r"^\.jtbc/issues/", r"^\.jtbc/minutes/"],
         "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/"],
-    },
-    "ses": {
-        # 外注SES: 担当と同等のコード権限。ただしガバナンス文書は稟議/課題起票以外触れない。
-        "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/issues/"],
-        "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/gates/", r"^\.jtbc/changes/", r"^\.jtbc/minutes/", r"^\.jtbc/incidents/"],
     },
 }
 

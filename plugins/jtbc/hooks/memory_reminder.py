@@ -23,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-# メモを残す価値が高い「知識生産」役職。実装のみの担当/SES や、
+# メモを残す価値が高い「知識生産」役職。実装のみの担当や、
 # 日常運営に口を出さない社長は除外(雑音を避ける)。
 KNOWLEDGE_ROLES = {"kacho", "shunin", "bucho", "pmo"}
 

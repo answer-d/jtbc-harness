@@ -190,6 +190,39 @@ def test_source_code_write_blocked_before_implementation(tmp_path):
     assert blocker == "phase_guard"
 
 
+def _ready_for_proposal_gate(sim):
+    """PROPOSAL→REQUIREMENTS の事前条件を、client 承認の形だけ未確定にして揃える。"""
+    sim.write_doc("jtbc-kacho", ".jtbc/proposal/proposal.md")
+    sim.update_state(None, approvals={"proposal_gate": {"bucho": "approved", "shacho": "approved"}})
+
+
+def test_state_guard_fails_closed_on_malformed_client_reviews(tmp_path):
+    """client_reviews を正本 dict でなく素の文字列で書いても、門番はクラッシュ fail-open せず
+    fail-closed でブロックする(E2E 2026-06-21 で発見した堅牢性ギャップの回帰)。"""
+    sim = Sim(tmp_path)  # PROPOSAL
+    _ready_for_proposal_gate(sim)
+
+    # client_reviews.proposal を dict でなく素の文字列 "APPROVED" にする(正本スキーマ違反)。
+    # 旧実装では cr.get() が AttributeError → exit 1 → ハーネス fail-open で遷移が素通りした。
+    sim.update_state(None, client_reviews={"proposal": "APPROVED"})
+    blocker, err = sim.update_state("jtbc-pmo", phase="REQUIREMENTS")
+    assert blocker == "state_guard" and "事前条件" in err, f"不正形状の client_reviews で素通りした ({blocker}: {err})"
+    assert "形状が不正" in err and "proposal" in err
+    assert sim.state["phase"] == "PROPOSAL", "ブロックされたのに phase が進んでいる"
+
+
+def test_state_guard_fails_closed_on_malformed_approvals(tmp_path):
+    """approvals のゲート値が dict でない不正形状でも、門番は fail-closed でブロックする。"""
+    sim = Sim(tmp_path)  # PROPOSAL
+    sim.write_doc("jtbc-kacho", ".jtbc/proposal/proposal.md")
+    # proposal_gate を承認状態 dict ではなく素の文字列にする
+    sim.update_state(None, approvals={"proposal_gate": "approved"})
+    sim.update_state(None, client_reviews={"proposal": {"status": "APPROVED"}})
+    blocker, err = sim.update_state("jtbc-pmo", phase="REQUIREMENTS")
+    assert blocker == "state_guard" and "形状が不正" in err, f"不正形状の approvals で素通りした ({blocker}: {err})"
+    assert sim.state["phase"] == "PROPOSAL"
+
+
 def test_incident_freezes_forward_docs(tmp_path):
     """緊急対応中は前進系ガバナンス文書の編集が凍結される(incident_guard)。"""
     sim = Sim(tmp_path)

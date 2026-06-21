@@ -139,7 +139,8 @@ def main() -> int:
             f"[team_guard] BLOCKED: teams 有効環境で役職 '{role}' を一発実行(subagent_type のみ)で\n"
             f"spawn しようとしました。役職は必ず常駐 teammate として起こしてください:\n"
             f'  Agent(subagent_type="{subagent_type}", name="<役職名>", run_in_background=true)\n'
-            f"以降の指示は同じ teammate へ SendMessage で送り、PJ完了まで shutdown しないでください。\n"
+            f"以降の指示は同じ teammate へ SendMessage で送り、当該フェーズのゲート通過まで生かしてください\n"
+            f"(フェーズ単位ライフサイクル: フェーズ内は shutdown せず、ゲートで引き継ぎメモ → shutdown_request で畳む)。\n"
             f"(一発実行が許されるのは teams 無効環境のフォールバックのみ。"
             f"CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 の現環境では使えません。)",
             file=sys.stderr,
