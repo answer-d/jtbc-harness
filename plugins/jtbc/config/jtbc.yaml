@@ -121,9 +121,13 @@ gates:
     next_phase: BASIC_DESIGN
     owner: kacho
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
-    required_documents: [project_plan, requirements, risk_register]
+    # PMBOK「WBS の作成(Create WBS)」は計画プロセス群の成果物。WBS骨子(ワークパッケージ)は
+    # 要件定義書(スコープ記述書相当)と合わせて **スコープ・ベースライン** を構成するため、
+    # 設計に入る前=この計画ゲートで必須とする(空テンプレのまま設計へ進む逸脱を物理防止)。
+    # 詳細タスク分解は detailed_design ゲートで主任が精緻化(段階的詳細化=ローリングウェーブ)。
+    required_documents: [project_plan, requirements, risk_register, wbs]
     approvers: [bucho]            # 起案者 kacho より上位のみ(社長は本ゲート不在のため部長が承認)
-    reviewers: [shunin]           # 主任は WBS実現性の事前レビュー・記載協力で関与(承認印は押さない)
+    reviewers: [shunin]           # 主任は WBS骨子の実現性を事前レビュー・記載協力で関与(承認印は押さない)
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 要件定義書
       documents: [requirements]
@@ -151,6 +155,8 @@ gates:
     owner: shunin                 # 起案者は詳細設計書を主体とする主任。WBS の owner は課長だが、
                                   # ゲート owner を課長にすると自分の成果物を承認できず承認連鎖が壊れるため主任のまま
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
+    # wbs は計画ゲートで骨子を確立済み。本ゲートでは主任がタスク分解(実装単位+触ってよいファイル)
+    # まで精緻化したものを要求する(state_guard のゲート別スタブが詳細設計段階のタスク記入を判定)。
     required_documents: [detailed_design, wbs, test_plan]  # wbs の owner は課長(主任が詳細タスクを記載)
     approvers: [kacho, bucho]     # 起案者 shunin を除外(課長・部長が承認)
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
@@ -227,6 +233,9 @@ events:
       frequency: medium
       minutes_required: true
       corrective_action_owner: kacho
+      # PMBOK「リスクの監視」は監視・コントロールの継続プロセス。リスク登録簿は計画時の一回限りでなく
+      # 本定例で毎回レビュー・更新する(新規リスクの識別・対応状況の確認・クローズ判定)。owner=課長。
+      standing_agenda: [progress, risk_register_review, issue_log_review]
     board_meeting:                # 社内役員会議
       display: 社内役員会議
       facilitator: bucho
@@ -291,3 +300,10 @@ policies:
   src_writable_phases: [IMPLEMENTATION, UNIT_TEST, INTEGRATION_TEST]
   # 追加要員(担当)の払い出しは部長承認が必要
   headcount_change_approver: bucho
+  # PMBOK「リスクの監視」: リスク登録簿は計画時の一回限りでなく継続的に見直す。
+  # 社内プロジェクト状況報告定例(internal_status_review)を更新の定常サイクルとする。
+  risk_review_cadence: internal_status_review
+  # PMBOK「品質マネジメントの計画」は計画プロセス群。詳細なテスト計画書(test_plan)は
+  # 詳細設計ゲートで主任が起案するが、その上位方針(テスト戦略・品質目標・受入基準の枠組み)は
+  # プロジェクト計画書(project_plan §品質・テスト方針)で計画時に定める(V字の上流確定)。
+  quality_strategy_in_project_plan: true

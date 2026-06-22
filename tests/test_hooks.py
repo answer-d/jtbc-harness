@@ -352,6 +352,72 @@ def test_state_guard_passes_non_phase_update(project):
 
 
 # ---------------------------------------------------------------------------
+# state_guard: WBS のゲート別スタブ(計画=骨子 / 詳細設計=タスク。ローリングウェーブ)
+# ---------------------------------------------------------------------------
+
+_DOC_FILLED = "# doc\n実内容が記載されています。トレーサビリティ確保済み。\n"
+# 骨子は埋まっているが、タスク分解はまだ(詳細設計フェーズで精緻化する想定)
+_WBS_SKELETON_ONLY = "# WBS\n## WBS骨子\n| WP-01 | 認証WP | REQ-001 | 1.0 |\n## タスク分解\n### WBS-001: <タスク名>\n"
+_WBS_WITH_TASKS = "# WBS\n## WBS骨子\n| WP-01 | 認証WP | REQ-001 | 1.0 |\n## タスク分解\n### WBS-001: ログインAPI実装\n"
+
+
+def _project_plan_ready(p):
+    """REQUIREMENTS→BASIC_DESIGN(project_plan ゲート)の前提を、WBS 以外は充足させる。"""
+    p.set_state(phase="REQUIREMENTS",
+                approvals={"project_plan_gate": {"bucho": "approved"}},
+                client_reviews={"project_plan": {"status": "APPROVED"}})
+    p.write_doc(".jtbc/plans/project_plan.md", _DOC_FILLED)
+    p.write_doc(".jtbc/requirements/requirements.md", _DOC_FILLED)
+    p.write_doc(".jtbc/risks/risk_register.md", _DOC_FILLED)
+    return p
+
+
+def _advance_payload(p, new_phase):
+    new_state = {"mode": "jtbc", "phase": new_phase, "active_incidents": [],
+                 "approvals": json.loads((p.root / ".jtbc" / "state.json").read_text())["approvals"],
+                 "client_reviews": json.loads((p.root / ".jtbc" / "state.json").read_text())["client_reviews"]}
+    return p.payload(agent_type="jtbc:jtbc-pmo", tool_name="Write",
+                     tool_input={"file_path": ".jtbc/state.json",
+                                 "content": json.dumps(new_state, ensure_ascii=False)})
+
+
+def test_state_guard_requires_wbs_skeleton_at_project_plan(project):
+    """WBS骨子が空テンプレ(<ワークパッケージ名>残存)なら計画ゲートを越えられない。"""
+    from conftest import run_hook
+    p = _project_plan_ready(project())
+    p.write_doc(".jtbc/wbs/wbs.md", "# WBS\n| WP-01 | <ワークパッケージ名> | REQ-001 |\n")
+    r = run_hook("state_guard", _advance_payload(p, "BASIC_DESIGN"))
+    assert r.blocked and "事前条件" in r.stderr and "wbs" in r.stderr
+
+
+def test_state_guard_wbs_skeleton_passes_project_plan_rolling_wave(project):
+    """骨子が埋まっていれば、タスク分解(<タスク名>)未着手でも計画ゲートは通る(段階的詳細化)。"""
+    from conftest import run_hook
+    p = _project_plan_ready(project())
+    p.write_doc(".jtbc/wbs/wbs.md", _WBS_SKELETON_ONLY)
+    r = run_hook("state_guard", _advance_payload(p, "BASIC_DESIGN"))
+    assert r.passed, r.stderr
+
+
+def test_state_guard_requires_wbs_tasks_at_detailed_design(project):
+    """詳細設計ゲートでは、骨子だけ(タスク分解=<タスク名>残存)では越えられない。"""
+    from conftest import run_hook
+    p = project()
+    p.set_state(phase="DETAILED_DESIGN",
+                approvals={"detailed_design_gate": {"kacho": "approved", "bucho": "approved"}},
+                client_reviews={"detailed_design": {"status": "APPROVED"}})
+    p.write_doc(".jtbc/designs/detailed_design.md", _DOC_FILLED)
+    p.write_doc(".jtbc/tests/test_plan.md", _DOC_FILLED)
+    p.write_doc(".jtbc/wbs/wbs.md", _WBS_SKELETON_ONLY)  # 骨子のみ、タスク未分解
+    r = run_hook("state_guard", _advance_payload(p, "IMPLEMENTATION"))
+    assert r.blocked and "事前条件" in r.stderr and "wbs" in r.stderr
+    # タスク分解まで埋めれば通る
+    p.write_doc(".jtbc/wbs/wbs.md", _WBS_WITH_TASKS)
+    r2 = run_hook("state_guard", _advance_payload(p, "IMPLEMENTATION"))
+    assert r2.passed, r2.stderr
+
+
+# ---------------------------------------------------------------------------
 # approval_sync_guard: gate 記録の押印 → state.json#approvals 転記漏れ検出
 # (UserPromptSubmit・非ブロッキング。検出時のみ stdout にリマインドを出す)
 # ---------------------------------------------------------------------------
