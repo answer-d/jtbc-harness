@@ -90,7 +90,8 @@ GATES = [
          approvers=["bucho", "shacho"], client="proposal"),
     dict(name="project_plan", phase="REQUIREMENTS", next="BASIC_DESIGN", owner="jtbc-kacho",
          ringi_docs=[".jtbc/requirements/requirements.md"],
-         other_docs=[".jtbc/plans/project_plan.md", ".jtbc/risks/risk_register.md"],
+         other_docs=[".jtbc/plans/project_plan.md", ".jtbc/risks/risk_register.md",
+                     ".jtbc/wbs/wbs.md"],  # WBS骨子は計画ベースラインとして計画ゲートで必須
          approvers=["bucho"], client="project_plan"),
     dict(name="basic_design", phase="BASIC_DESIGN", next="DETAILED_DESIGN", owner="jtbc-kacho",
          ringi_docs=[".jtbc/designs/basic_design.md"],

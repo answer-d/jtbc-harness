@@ -60,7 +60,7 @@ def _debug_log(payload: dict, *, decision: str, role: str | None = None, reason:
 # docs: 埋まっている必要がある必要書類のキー。
 TRANSITIONS: dict[str, dict] = {
     "REQUIREMENTS":    {"gate": "proposal",        "approvers": ["bucho", "shacho"], "client_review": "proposal",        "docs": ["proposal"]},
-    "BASIC_DESIGN":    {"gate": "project_plan",    "approvers": ["bucho"],           "client_review": "project_plan",    "docs": ["project_plan", "requirements", "risk_register"]},
+    "BASIC_DESIGN":    {"gate": "project_plan",    "approvers": ["bucho"],           "client_review": "project_plan",    "docs": ["project_plan", "requirements", "risk_register", "wbs"]},
     "DETAILED_DESIGN": {"gate": "basic_design",    "approvers": ["bucho"],           "client_review": "basic_design",    "docs": ["basic_design", "issue_log"]},
     "IMPLEMENTATION":  {"gate": "detailed_design", "approvers": ["kacho", "bucho"],  "client_review": "detailed_design", "docs": ["detailed_design", "wbs", "test_plan"]},
     "RELEASED":        {"gate": "release",         "approvers": ["bucho", "shacho"], "client_review": None,               "docs": ["test_report", "deliverables_list"]},
@@ -85,13 +85,24 @@ DOC_PATHS = {
 
 # 雛形のまま(未記入)を示すスタブ。残っていれば「埋まっていない」とみなす。
 # どのテンプレでも未置換プレースホルダ "{{" が残っていれば未記入。
+#
+# 値が list の場合は、その書類を要求する全ゲートで同じスタブを判定する。
+# 値が dict の場合は **ゲート別** スタブ(キー=gate 名)。同じファイルが
+# 複数ゲートで段階的に詳細化される書類(WBS=ローリングウェーブ)に使う:
+#   - project_plan ゲート(計画): WBS骨子(ワークパッケージ)が埋まっているか
+#   - detailed_design ゲート(詳細設計): タスク分解(実装単位)が埋まっているか
+# これにより「骨子だけ」で計画ゲートは通し、詳細設計ゲートで初めてタスク分解を要求できる
+# (PMBOK の Create WBS=計画 / 段階的詳細化=後工程 を機械的に表現する)。
 DOC_STUBS = {
     "requirements":    ["<要件名>"],
     "risk_register":   ["<リスク内容>"],
     "project_plan":    ["(提案書のサマリを転記)"],
     "issue_log":       ["<課題のタイトル>"],
     "detailed_design": ["<コンポーネント名>"],
-    "wbs":             ["<タスク名>"],
+    "wbs": {
+        "project_plan":    ["<ワークパッケージ名>"],
+        "detailed_design": ["<タスク名>"],
+    },
 }
 GENERIC_STUB = "{{"
 
@@ -152,8 +163,19 @@ def _resulting_state(tool_name: str, tool_input: dict, on_disk: dict) -> dict:
     return on_disk
 
 
-def _doc_unfilled_reason(key: str, cwd: Path) -> str | None:
-    """必要書類が未作成 or 雛形のままなら理由文字列、OKなら None。"""
+def _stubs_for(key: str, gate: str | None) -> list[str]:
+    """書類 key のスタブ一覧を、ゲート別 dict / 共通 list の両形式から解決する。"""
+    spec = DOC_STUBS.get(key)
+    if isinstance(spec, dict):
+        return spec.get(gate, []) if gate else []
+    return spec or []
+
+
+def _doc_unfilled_reason(key: str, cwd: Path, gate: str | None = None) -> str | None:
+    """必要書類が未作成 or 雛形のままなら理由文字列、OKなら None。
+
+    gate を渡すと、ゲート別スタブ(DOC_STUBS が dict の書類)を当該ゲート基準で判定する。
+    """
     rel = DOC_PATHS.get(key)
     if not rel:
         return None
@@ -166,7 +188,7 @@ def _doc_unfilled_reason(key: str, cwd: Path) -> str | None:
         return None
     if GENERIC_STUB in text:
         return f"{rel} に未置換プレースホルダ {{{{...}}}} が残存(雛形のまま)"
-    for stub in DOC_STUBS.get(key, []):
+    for stub in _stubs_for(key, gate):
         if stub in text:
             return f"{rel} に雛形スタブ '{stub}' が残存(未記入)"
     return None
@@ -206,9 +228,9 @@ def _check_transition_preconditions(state: dict, new_phase: str, cwd: Path) -> s
         if cr.get("status") != "APPROVED":
             return f"客先承認が未了(client_reviews.{cr_key} が APPROVED でない)"
 
-    # (3) 必要書類: 未作成 or 雛形のままでないか
+    # (3) 必要書類: 未作成 or 雛形のままでないか(ゲート別スタブは当該ゲート基準で判定)
     for key in spec.get("docs", []):
-        reason = _doc_unfilled_reason(key, cwd)
+        reason = _doc_unfilled_reason(key, cwd, spec["gate"])
         if reason:
             return f"必要書類が未整備({reason})"
 
