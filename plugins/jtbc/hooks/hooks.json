@@ -87,6 +87,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/approval_sync_guard.py",
             "description": "gate記録に押印済みだがstate.json#approvals未転記の承認をリード/PMOへ通知"
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/meeting_orchestrator.py",
+            "description": "フェーズ開始時の作戦会議とターンカウンタ定例を司令塔へ決定論的に促す(通知のみ)"
           }
         ]
       }

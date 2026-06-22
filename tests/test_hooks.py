@@ -448,10 +448,24 @@ def _proposal_ready_state(phase="PROPOSAL"):
     }
 
 
+def _write_gate_record(p, gate, *, items=2, unchecked=0):
+    """ゲート記録 .jtbc/gates/<gate>_gate.md を生成する。
+
+    items 件のチェックリストのうち先頭 unchecked 件を [ ](未チェック)、残りを [x] にする。
+    """
+    lines = [f"# {gate} ゲート記録", ""]
+    for i in range(items):
+        mark = " " if i < unchecked else "x"
+        lines.append(f"- [{mark}] 審査項目{i + 1} (課長)")
+    p.write_doc(f".jtbc/gates/{gate}_gate.md", "\n".join(lines) + "\n")
+    return p
+
+
 def test_state_guard_allows_pmo_when_preconditions_met(project):
     from conftest import run_hook
     p = project(**_proposal_ready_state())
     p.write_doc(".jtbc/proposal/proposal.md", "# 提案書\n実内容あり")
+    _write_gate_record(p, "proposal")
     new_state = _proposal_ready_state(phase="REQUIREMENTS")
     payload = p.payload(agent_type="jtbc:jtbc-pmo", tool_name="Write",
                         tool_input={"file_path": ".jtbc/state.json",
@@ -464,6 +478,7 @@ def test_state_guard_blocks_non_pmo(project):
     from conftest import run_hook
     p = project(**_proposal_ready_state())
     p.write_doc(".jtbc/proposal/proposal.md", "# 提案書\n実内容あり")
+    _write_gate_record(p, "proposal")
     new_state = _proposal_ready_state(phase="REQUIREMENTS")
     payload = p.payload(agent_type="jtbc:jtbc-kacho", tool_name="Write",
                         tool_input={"file_path": ".jtbc/state.json",
@@ -516,6 +531,7 @@ def _project_plan_ready(p):
     p.write_doc(".jtbc/plans/project_plan.md", _DOC_FILLED)
     p.write_doc(".jtbc/requirements/requirements.md", _DOC_FILLED)
     p.write_doc(".jtbc/risks/risk_register.md", _DOC_FILLED)
+    _write_gate_record(p, "project_plan")
     return p
 
 
@@ -555,6 +571,7 @@ def test_state_guard_requires_wbs_tasks_at_detailed_design(project):
                 client_reviews={"detailed_design": {"status": "APPROVED"}})
     p.write_doc(".jtbc/designs/detailed_design.md", _DOC_FILLED)
     p.write_doc(".jtbc/tests/test_plan.md", _DOC_FILLED)
+    _write_gate_record(p, "detailed_design")
     p.write_doc(".jtbc/wbs/wbs.md", _WBS_SKELETON_ONLY)  # 骨子のみ、タスク未分解
     r = run_hook("state_guard", _advance_payload(p, "IMPLEMENTATION"))
     assert r.blocked and "事前条件" in r.stderr and "wbs" in r.stderr
@@ -562,6 +579,84 @@ def test_state_guard_requires_wbs_tasks_at_detailed_design(project):
     p.write_doc(".jtbc/wbs/wbs.md", _WBS_WITH_TASKS)
     r2 = run_hook("state_guard", _advance_payload(p, "IMPLEMENTATION"))
     assert r2.passed, r2.stderr
+
+
+# ---------------------------------------------------------------------------
+# state_guard: ゲート記録チェックリストの機械強制(未チェック [ ] 残存で移行ブロック)
+# ---------------------------------------------------------------------------
+
+def test_state_guard_blocks_when_checklist_incomplete(project):
+    """承認・客先承認・書類が揃っても、gate 記録に [ ] が残れば移行をブロックする。"""
+    from conftest import run_hook
+    p = project(**_proposal_ready_state())
+    p.write_doc(".jtbc/proposal/proposal.md", "# 提案書\n実内容あり")
+    _write_gate_record(p, "proposal", items=3, unchecked=1)  # 1件未チェック
+    new_state = _proposal_ready_state(phase="REQUIREMENTS")
+    payload = p.payload(agent_type="jtbc:jtbc-pmo", tool_name="Write",
+                        tool_input={"file_path": ".jtbc/state.json",
+                                    "content": json.dumps(new_state, ensure_ascii=False)})
+    r = run_hook("state_guard", payload)
+    assert r.blocked and "チェックリスト" in r.stderr and "[ ]" in r.stderr
+
+
+def test_state_guard_blocks_when_gate_record_missing(project):
+    """前提が揃っても gate 記録 .md 自体が無ければブロック(審査チェックリスト未生成)。"""
+    from conftest import run_hook
+    p = project(**_proposal_ready_state())
+    p.write_doc(".jtbc/proposal/proposal.md", "# 提案書\n実内容あり")
+    # gate 記録を書かない
+    new_state = _proposal_ready_state(phase="REQUIREMENTS")
+    payload = p.payload(agent_type="jtbc:jtbc-pmo", tool_name="Write",
+                        tool_input={"file_path": ".jtbc/state.json",
+                                    "content": json.dumps(new_state, ensure_ascii=False)})
+    r = run_hook("state_guard", payload)
+    assert r.blocked and "チェックリスト" in r.stderr and "未作成" in r.stderr
+
+
+# ---------------------------------------------------------------------------
+# meeting_orchestrator: フェーズ作戦会議 + ターンカウンタ定例(UserPromptSubmit・通知のみ)
+# ---------------------------------------------------------------------------
+
+def test_meeting_orchestrator_kickoff_on_phase_entry(project):
+    """新フェーズに入ったら、当該役職(PMO除く)を集めた作戦会議を促す。"""
+    from conftest import run_hook
+    p = project(phase="REQUIREMENTS")
+    r = run_hook("meeting_orchestrator", p.payload())
+    assert r.passed
+    assert "作戦会議" in r.stdout and "kacho" in r.stdout and "pmo" not in r.stdout
+
+
+def test_meeting_orchestrator_kickoff_idempotent(project):
+    """同一フェーズの2回目以降は作戦会議を促さない(サイドカーで観測済み)。"""
+    from conftest import run_hook
+    p = project(phase="REQUIREMENTS")
+    run_hook("meeting_orchestrator", p.payload())
+    r2 = run_hook("meeting_orchestrator", p.payload())
+    assert "作戦会議" not in r2.stdout
+
+
+def test_meeting_orchestrator_tick_every_n(project):
+    """ユーザー往復が一定数に達したら定例を促す(KICKOFF外フェーズで tick を分離検証)。"""
+    from conftest import run_hook
+    p = project(phase="PROPOSAL")  # KICKOFF_PHASES 外なので作戦会議は出ない
+    last = None
+    for _ in range(8):  # TICK_EVERY=8
+        last = run_hook("meeting_orchestrator", p.payload())
+    assert "定例" in last.stdout
+
+
+def test_meeting_orchestrator_silent_when_completed(project):
+    from conftest import run_hook
+    p = project(phase="COMPLETED")
+    r = run_hook("meeting_orchestrator", p.payload())
+    assert r.passed and r.stdout.strip() == ""
+
+
+def test_meeting_orchestrator_silent_during_incident(project):
+    from conftest import run_hook
+    p = project(phase="REQUIREMENTS", active_incidents=["INC-001"])
+    r = run_hook("meeting_orchestrator", p.payload())
+    assert r.stdout.strip() == ""
 
 
 # ---------------------------------------------------------------------------
@@ -668,6 +763,7 @@ def test_state_guard_allows_pmo_teammate_short_name(project):
     from conftest import run_hook
     p = project(**_proposal_ready_state())
     p.write_doc(".jtbc/proposal/proposal.md", "# 提案書\n実内容あり")
+    _write_gate_record(p, "proposal")
     new_state = _proposal_ready_state(phase="REQUIREMENTS")
     payload = p.payload(agent_type="pmo", tool_name="Write",
                         tool_input={"file_path": ".jtbc/state.json",
