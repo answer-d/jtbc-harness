@@ -20,8 +20,7 @@
   └ 部長 - jtbc-bucho   (承認・助言・要員払い出し)
       └ 課長 - jtbc-kacho   ← 本書の作成者 / PM (裏方。重要局面で営業に同席紹介され客前で技術説明)
           └ 主任 - jtbc-shunin   (PL・テックリード)
-              ├ 担当 - jtbc-tantou (N人)
-              └ 外注SES - jtbc-ses (M人、必要に応じ増員)
+              └ 担当 - jtbc-tantou (N人、必要に応じ部長承認で増員)
 ```
 
 ## 3. WBSサマリ(マイルストーン)

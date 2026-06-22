@@ -148,8 +148,8 @@ def test_reminder_silent_when_recorded(project):
 
 
 def test_reminder_silent_for_non_knowledge_role(project):
-    # 実装のみの SES は知識生産役職でないので促さない
+    # 実装のみの担当は知識生産役職でないので促さない
     p = project()
-    r = run_hook("memory_reminder", p.payload(agent_type="jtbc:jtbc-ses"))
+    r = run_hook("memory_reminder", p.payload(agent_type="jtbc:jtbc-tantou"))
     assert r.passed
     assert r.stderr.strip() == ""

@@ -88,7 +88,6 @@
         "kacho": {"type": "integer", "minimum": 0},
         "shunin": {"type": "integer", "minimum": 0},
         "tantou": {"type": "integer", "minimum": 0},
-        "ses": {"type": "integer", "minimum": 0},
         "pmo": {"type": "integer", "minimum": 0}
       }
     },
@@ -99,7 +98,7 @@
         "^[a-z_]+_gate$": {
           "type": "object",
           "patternProperties": {
-            "^(shacho|bucho|kacho|shunin|tantou|ses|pmo)$": {
+            "^(shacho|bucho|kacho|shunin|tantou|pmo)$": {
               "type": "string",
               "enum": ["pending", "approved", "rejected"]
             }

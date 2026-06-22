@@ -1,7 +1,7 @@
 name: jtbc
 displayName: 日本の伝統的大企業モード
 description: |
-  AIエージェントによるソフトウェア開発に、5階層の役職構造(+外注SES)、
+  AIエージェントによるソフトウェア開発に、5階層の役職構造、
   フェーズゲート、稟議による承認フロー、各種会議体、インシデント対応を
   適用するモード。本プラグインは JTBC 専用であり、他モードは持たない。
   目的は AI の暴走防止・要件逸脱防止・設計品質向上・意思決定の記録・組織的開発。
@@ -12,13 +12,13 @@ roles:
   - kacho    # 課長
   - shunin   # 主任
   - tantou   # 担当
-  - ses      # 外注SES (低コストモデル)
 
 # PMO(プロジェクトマネジメントオフィス)はライン職(roles の上下関係)とは直交する
 # プロセス職。部長直下のスタッフ機能として、PMBOK に沿ったプロセス適合を監督する。
 # - **フェーズ移行(state.json#phase の書き換え)を行える唯一の役職**。ゲート承認の充足・
 #   必要書類の整備・客先承認を機械検証してから工程を進める(state_guard.py が物理担保)。
-# - 受注後の立ち上げ・計画(プロジェクト計画書/リスク登録簿/WBS骨子)を主導する。
+# - 受注後の立ち上げ・計画では、課長(owner)による計画文書(プロジェクト計画書/リスク登録簿/WBS骨子)の
+#   整備を働きかけ、充足・逸脱を検証する。**PMO 自身は計画文書を書かない**(中身は課長/主任の領域)。
 # - **成果物の品質承認(押印)はしない**(それはゲート承認者=部長/社長の責務)。プロセスのみ見る。
 process_office:
   persona: pmo
@@ -33,7 +33,6 @@ agent_name_map:
   kacho: jtbc-kacho
   shunin: jtbc-shunin
   tantou: jtbc-tantou
-  ses: jtbc-ses
   pmo: jtbc-pmo
 
 # 客対窓口(営業)。メインセッション(司令塔)がお客様に応対するときに名乗る人格。
@@ -76,7 +75,7 @@ phases:
 #   起案者(owner)は approvers に含めない。これにより「作成者≠承認者」を担保する。
 #   (旧仕様の owner 自己承認は廃止。)
 # 【承認は起案者より上位のみ(重要)】役職の上下は roles の並び順
-#   (社長 > 部長 > 課長 > 主任 > 担当 > 外注SES)。**承認(押印)できるのは
+#   (社長 > 部長 > 課長 > 主任 > 担当)。**承認(押印)できるのは
 #   起案者(owner)より上位の役職に限る。** 起案者と同位・下位の役職は approvers に
 #   含めない。下位役職が上位の起案を承認する不自然(例: 課長起案の計画書を主任が承認)を
 #   排除する。下位役職に事前レビュー・記載協力をさせたいときは approvers ではなく
@@ -149,9 +148,10 @@ gates:
     previous_phase: DETAILED_DESIGN
     review_phase: DETAILED_DESIGN_REVIEW
     next_phase: IMPLEMENTATION
-    owner: shunin
+    owner: shunin                 # 起案者は詳細設計書を主体とする主任。WBS の owner は課長だが、
+                                  # ゲート owner を課長にすると自分の成果物を承認できず承認連鎖が壊れるため主任のまま
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
-    required_documents: [detailed_design, wbs, test_plan]
+    required_documents: [detailed_design, wbs, test_plan]  # wbs の owner は課長(主任が詳細タスクを記載)
     approvers: [kacho, bucho]     # 起案者 shunin を除外(課長・部長が承認)
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 詳細設計書
@@ -208,7 +208,7 @@ events:
     project_internal_standup:     # プロジェクト内部定例
       display: プロジェクト内部定例
       facilitator: shunin
-      participants: [kacho, tantou, ses]
+      participants: [kacho, tantou]
       audience: internal
       frequency: high
       minutes_required: true
@@ -289,5 +289,5 @@ policies:
   lessons_minimum: 3
   enforce_traceability: true
   src_writable_phases: [IMPLEMENTATION, UNIT_TEST, INTEGRATION_TEST]
-  # 追加要員(担当/外注SES)の払い出しは部長承認が必要
+  # 追加要員(担当)の払い出しは部長承認が必要
   headcount_change_approver: bucho

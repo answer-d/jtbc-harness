@@ -6,17 +6,15 @@ role_guard.py — JTBC PreToolUse hook
 「触ってよいパス」「触ってはいけないパス」を強制する。
 
 役職判定は payload.agent_type (Claude Code が PreToolUse に渡す
-subagent の frontmatter name) を見る。例: "jtbc-shacho", "jtbc-tantou", "jtbc-ses"。
+subagent の frontmatter name) を見る。例: "jtbc-shacho", "jtbc-tantou"。
 ※ 司令塔(メインセッション)からの書込みは agent_type を持たないため
   本ガードは素通りする(役職振り分けはサブエージェント起動が前提)。
 
 ルール: agents/jtbc-<role>.md の冒頭で記述している禁止/許可パスを
 本ファイル内のテーブル ROLE_RULES に映している。
 
-実装担当 (jtbc-tantou / jtbc-ses) の場合は追加で
+実装担当 (jtbc-tantou) の場合は追加で
 state.json#active_wbs_task が割り当てられているかを照合する。
-外注SES (jtbc-ses) は担当と同じファイル権限だが、設計/要件/計画系の
-ドキュメントには一切触れない(常に課長以下の指示でコードのみを扱う)。
 """
 from __future__ import annotations
 
@@ -73,7 +71,7 @@ def resolve_agent_role(payload: dict) -> str | None:
 
 
 # コードを書くロール(active_wbs_task が必要)。主任もテックリードとして実装可。
-IMPLEMENTER_ROLES = {"tantou", "ses", "shunin"}
+IMPLEMENTER_ROLES = {"tantou", "shunin"}
 
 ROLE_RULES: dict[str, dict[str, list[str]]] = {
     "shacho": {
@@ -85,13 +83,16 @@ ROLE_RULES: dict[str, dict[str, list[str]]] = {
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/"],
     },
     "pmo": {
-        # PMO: プロセスの門番。phase 移行の正本管理(state.json)と PM プロセス文書を扱う。
-        # 提案/要件/設計の起案・改訂はしない(課長/主任の領域)。コードも書かない。
-        "allow": [r"^\.jtbc/state\.json", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/gates/", r"^\.jtbc/issues/", r"^\.jtbc/deliverables/", r"^\.jtbc/lessons/", r"^\.jtbc/minutes/", r"^\.jtbc/changes/pending/"],
-        "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/proposal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/"],
+        # PMO: プロセスの門番。phase 移行の正本管理(state.json)・ゲート検証記録(gates)・
+        # 成果物ステータス台帳(deliverables)・会議記録(minutes)など「プロセス/ガバナンスの記録」を扱う。
+        # PMBOK 上、プロジェクト文書(計画書/リスク登録簿/WBS/課題管理簿/教訓登録簿)と提案/要件/設計、
+        # 稟議の起案・記載はすべて PM(課長)/主任の領域。PMO は中身を「書かず」「検証する」。コードも書かない。
+        "allow": [r"^\.jtbc/state\.json", r"^\.jtbc/gates/", r"^\.jtbc/deliverables/", r"^\.jtbc/minutes/"],
+        "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/proposal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/issues/", r"^\.jtbc/lessons/", r"^\.jtbc/changes/pending/"],
     },
     "kacho": {
-        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/risks/", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
+        # 課長(PM)は WBS の owner。骨子を起案し、メンバー(主任のタスク分解・担当の進捗更新)の編集を束ねて維持する。
+        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/issues/", r"^\.jtbc/lessons/", r"^\.jtbc/deliverables/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/designs/detailed_design"],
     },
     "shunin": {
@@ -103,11 +104,6 @@ ROLE_RULES: dict[str, dict[str, list[str]]] = {
     "tantou": {
         "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/changes/pending/", r"^\.jtbc/issues/", r"^\.jtbc/minutes/"],
         "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/"],
-    },
-    "ses": {
-        # 外注SES: 担当と同等のコード権限。ただしガバナンス文書は稟議/課題起票以外触れない。
-        "allow": [r"^src/", r"^lib/", r"^app/", r"^tests/", r"^\.jtbc/wbs/", r"^\.jtbc/tests/test_report", r"^\.jtbc/issues/"],
-        "deny": [r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/gates/", r"^\.jtbc/changes/", r"^\.jtbc/minutes/", r"^\.jtbc/incidents/"],
     },
 }
 

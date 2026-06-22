@@ -180,6 +180,12 @@ def _check_transition_preconditions(state: dict, new_phase: str, cwd: Path) -> s
 
     # (1) 内部承認: ゲート承認者全員が approved か
     approvals = (state.get("approvals") or {}).get(f"{spec['gate']}_gate") or {}
+    # 非 dict の不正形状は例外にせず fail-closed でブロック(門番の素通りを防ぐ)。
+    if not isinstance(approvals, dict):
+        return (
+            f"approvals.{spec['gate']}_gate の形状が不正(dict ではなく {type(approvals).__name__})。"
+            f"正本スキーマは役職→承認状態の dict"
+        )
     missing = [r for r in spec["approvers"] if approvals.get(r) != "approved"]
     if missing:
         return f"内部承認が未了({spec['gate']}_gate の承認者 {', '.join(missing)} が未承認)"
@@ -188,6 +194,15 @@ def _check_transition_preconditions(state: dict, new_phase: str, cwd: Path) -> s
     cr_key = spec.get("client_review")
     if cr_key:
         cr = (state.get("client_reviews") or {}).get(cr_key) or {}
+        # 正本スキーマ(client-review.md)は dict {"status":"APPROVED",...}。
+        # 素の文字列等の不正形状で渡されると cr.get() が AttributeError → クラッシュ →
+        # ハーネス fail-open で門番が素通りになる。門番は fail-closed であるべきなので、
+        # 非 dict は例外にせず「不正形状=未承認」として遷移をブロックする。
+        if not isinstance(cr, dict):
+            return (
+                f"client_reviews.{cr_key} の形状が不正(dict ではなく {type(cr).__name__})。"
+                f'正本スキーマは {{"status":"APPROVED",...}} の dict(client-review.md)'
+            )
         if cr.get("status") != "APPROVED":
             return f"客先承認が未了(client_reviews.{cr_key} が APPROVED でない)"
 
