@@ -53,7 +53,7 @@ argument-hint: "[project-name]"
 ├── issues/          ← 課題管理簿
 ├── changes/{pending,approved,rejected}/  ← 稟議
 ├── tests/           ← テスト計画 / テスト結果
-├── deliverables/    ← 納品一覧 / 完了承認書
+├── deliverables/    ← 成果物一覧 / 完了承認書
 ├── lessons/         ← 教訓登録簿
 ├── incidents/       ← 障害報告書 (発生時)
 ├── minutes/         ← 議事録 (会議時)

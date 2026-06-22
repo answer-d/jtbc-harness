@@ -36,6 +36,11 @@
           },
           {
             "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/ringi_consistency.py",
+            "description": "変更管理票のtypeが改訂対象を覆っているかを起票時に検証"
+          },
+          {
+            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/incident_guard.py",
             "description": "緊急対応中(active_incidents非空)に前進系ガバナンス文書の編集を阻止"
           },

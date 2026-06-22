@@ -49,6 +49,46 @@ def resolve_agent_role(payload: dict) -> str | None:
 _HOOK = "ringi_guard"
 
 
+def _strip_html_comments(text: str) -> str:
+    """HTML コメント(テンプレの記入例など)を除去する。改訂対象パスの誤検出を防ぐ。"""
+    return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+
+
+def _parse_cr_types(fm_block: str) -> set[str]:
+    """frontmatter から変更種別 (type) を集合で取り出す。
+
+    type は単一の予想値ではなく、改訂対象から導出される複数可の従属情報。
+    以下の表記をすべて受理する:
+      - 単一:        type: design
+      - 列挙:        type: requirement, design
+      - 角括弧:      type: [requirement, design]
+      - YAMLリスト:  type:\\n  - requirement\\n  - design
+    プレースホルダ 'a | b | c'(未記入の選択肢列挙)は実値でないため除外する。
+    """
+    types: set[str] = set()
+    lines = fm_block.splitlines()
+    for idx, line in enumerate(lines):
+        if line.strip().startswith("type:"):
+            val = line.split(":", 1)[1].strip()
+            if val:
+                for part in val.strip("[]").split(","):
+                    part = part.strip().strip("'\"")
+                    if part and "|" not in part:
+                        types.add(part)
+            for nxt in lines[idx + 1:]:
+                s = nxt.strip()
+                if s.startswith("- "):
+                    item = s[2:].strip().strip("'\"")
+                    if item:
+                        types.add(item)
+                elif s == "" or s.startswith("#"):
+                    continue
+                else:
+                    break
+            break
+    return types
+
+
 def _debug_log(payload: dict, *, decision: str, role: str | None = None, reason: str = "") -> None:
     """JTBC_HOOK_DEBUG 設定時のみ、判定結果を .jtbc/hook_debug.log に1行記録する(調査用)。
 
@@ -112,11 +152,14 @@ def main() -> int:
     except json.JSONDecodeError:
         return 0
 
-    # CRのtype:フィールドと cr_type のマッピング
-    CR_TYPE_MAP = {
-        "requirement": {"requirement"},
-        "design_basic": {"design"},
-        "design_detailed": {"design"},
+    # 編集対象ドキュメント(cr_type)を改訂するために、CR の type が含んでいなければ
+    # ならない変更種別。改訂対象パスから機械的に定まる(= 起票時に人が予想した type に
+    # 依存せず、対象パスを正本とする)。proposal はキーを持たない = CR では解錠しない
+    # (初版起案者・承認者のみが書ける)。
+    REQUIRED_CR_TYPE = {
+        "requirement": "requirement",
+        "design_basic": "design",
+        "design_detailed": "design",
     }
 
     phase = state.get("phase")
@@ -131,13 +174,17 @@ def main() -> int:
                            reason=f"{cr_type} 承認者の押印・赤入れ")
                 return 0
             approved_dir = cwd / ".jtbc" / "changes" / "approved"
-            if approved_dir.exists():
-                approved_for_target = False
-                for cr_file in approved_dir.glob("CR-*.md"):
+            required_type = REQUIRED_CR_TYPE.get(cr_type)
+            approved_for_target = False
+            # 改訂対象に挙げてはいるが、type が当該ベースラインを覆っていない承認済み CR。
+            # 「承認は通ったのに必要文書が解錠されない」無言の手詰まりを避けるため名指しする。
+            type_short_crs: list[str] = []
+            if required_type is not None and approved_dir.exists():
+                for cr_file in sorted(approved_dir.glob("CR-*.md")):
                     text = cr_file.read_text(errors="ignore")
                     # フロントマター(最初の --- と次の --- の間)を簡易パース
                     fm_status = None
-                    fm_type = None
+                    fm_block = ""
                     body_after_fm = text
                     if text.startswith("---"):
                         end_idx = text.find("---", 3)
@@ -145,34 +192,40 @@ def main() -> int:
                             fm_block = text[3:end_idx]
                             body_after_fm = text[end_idx + 3:]
                             for line in fm_block.splitlines():
-                                if ":" in line:
-                                    key, _, val = line.partition(":")
-                                    key = key.strip()
-                                    val = val.strip()
-                                    if key == "status":
-                                        fm_status = val
-                                    elif key == "type":
-                                        fm_type = val
-                    # 3条件: status:APPROVED / type一致 / 本文に対象パス含む
-                    allowed_cr_types = CR_TYPE_MAP.get(cr_type, set())
-                    if (
-                        fm_status == "APPROVED"
-                        and fm_type in allowed_cr_types
-                        and relative in body_after_fm
-                    ):
-                        approved_for_target = True
-                        break
-                if approved_for_target:
-                    _debug_log(payload, decision="allow", role=agent_name,
-                               reason=f"{cr_type} 承認済み稟議で許可")
-                    return 0
+                                key, _, val = line.partition(":")
+                                if key.strip() == "status":
+                                    fm_status = val.strip()
+                    declared_types = _parse_cr_types(fm_block)
+                    # 改訂対象パスは本文(記入例コメント除去後)を正本とする。
+                    path_listed = relative in _strip_html_comments(body_after_fm)
+                    if fm_status == "APPROVED" and path_listed:
+                        if required_type in declared_types:
+                            approved_for_target = True
+                            break
+                        type_short_crs.append(cr_file.stem)
+            if approved_for_target:
+                _debug_log(payload, decision="allow", role=agent_name,
+                           reason=f"{cr_type} 承認済み稟議で許可")
+                return 0
             _debug_log(payload, decision="block", role=agent_name,
                        reason=f"{cr_type} 稟議未承認(phase={phase})")
+            if type_short_crs:
+                hint = (
+                    f"承認済み CR ({', '.join(type_short_crs)}) はこの文書を改訂対象に\n"
+                    f"挙げていますが、その type に必要な変更種別 '{required_type}' が含まれていません。\n"
+                    f"type は改訂対象から導出される従属情報です。'{required_type}' を加えて再承認してください。"
+                )
+            elif required_type is not None:
+                hint = (
+                    f"この文書を改訂対象に挙げ、変更種別 '{required_type}' を含む\n"
+                    f"承認済み(APPROVED)の変更管理票が必要です。"
+                )
+            else:
+                hint = "この文書は変更管理票では解錠されません(初版起案者・承認者のみが書けます)。"
             print(
                 f"[ringi_guard] BLOCKED: '{relative}' の変更には稟議承認が必要です。\n"
-                f"変更管理(稟議)は司令塔が社内で自動処理します(governance スキル)。\n"
-                f"  起票({cr_type.split('_')[0]}) → 承認パスで各役職が押印 → APPROVED → 反映\n"
-                f"全承認後にこのファイル更新を再試行してください。",
+                f"{hint}\n"
+                f"変更管理(稟議)は司令塔が社内で自動処理します(governance スキル)。",
                 file=sys.stderr,
             )
             return 2
