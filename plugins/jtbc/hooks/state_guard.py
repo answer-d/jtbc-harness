@@ -194,6 +194,27 @@ def _doc_unfilled_reason(key: str, cwd: Path, gate: str | None = None) -> str | 
     return None
 
 
+def _gate_checklist_incomplete(gate: str, cwd: Path) -> str | None:
+    """ゲート記録 .jtbc/gates/<gate>_gate.md の審査チェックリストが未完了なら理由、OKなら None。
+
+    承認印(approvals dict)とは別観点。「書類は揃い承認印も押されたが、ゲート記録の
+    チェック欄が [ ] のまま」という抜けを物理ブロックする(PMO の目視確認頼みを廃する)。
+    1項目でも未チェック [ ] が残っていれば未完了とみなす(reviewers 担当項目も含め全件 [x] が必要)。
+    """
+    rel = f".jtbc/gates/{gate}_gate.md"
+    path = cwd / rel
+    if not path.exists():
+        return f"{rel} が未作成(審査チェックリストが生成されていない)"
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return None
+    unchecked = len(re.findall(r"\[ \]", text))
+    if unchecked:
+        return f"{rel} に未チェック項目 [ ] が {unchecked} 件残存(審査が完了していない)"
+    return None
+
+
 def _check_transition_preconditions(state: dict, new_phase: str, cwd: Path) -> str | None:
     """移行先ゲートの事前条件を検査。満たさなければ理由文字列、OKなら None。"""
     spec = TRANSITIONS.get(new_phase)
@@ -233,6 +254,11 @@ def _check_transition_preconditions(state: dict, new_phase: str, cwd: Path) -> s
         reason = _doc_unfilled_reason(key, cwd, spec["gate"])
         if reason:
             return f"必要書類が未整備({reason})"
+
+    # (4) 審査チェックリスト: ゲート記録 .md の全項目が [x] か(未チェック [ ] を物理ブロック)
+    reason = _gate_checklist_incomplete(spec["gate"], cwd)
+    if reason:
+        return f"審査チェックリストが未完了({reason})"
 
     return None
 
@@ -288,7 +314,7 @@ def main() -> int:
         print(
             f"[state_guard] BLOCKED: フェーズ移行(phase: {current_phase} → {new_phase})の事前条件を満たしていません。\n"
             f"理由: {reason}。\n"
-            f"内部審査(ゲート承認)→ 客先提示(ご承認)→ 必要書類の整備 を完了してから移行してください。\n"
+            f"必要書類の整備 → 審査チェックリストの全項目 [x] → 内部審査(ゲート承認)→ 客先提示(ご承認)を完了してから移行してください。\n"
             f"(internal_approval_first ゲートでは、phase を進めるのは客先のご承認 APPROVED 時です。)",
             file=sys.stderr,
         )

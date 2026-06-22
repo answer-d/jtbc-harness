@@ -56,6 +56,7 @@ argument-hint: "[project-name]"
 ├── deliverables/    ← 成果物一覧 / 完了承認書
 ├── lessons/         ← 教訓登録簿
 ├── incidents/       ← 障害報告書 (発生時)
+├── naze-naze/       ← なぜなぜ分析 実施記録 RCA-NNN (真因究明時)
 ├── minutes/         ← 議事録 (会議時)
 ├── client_reviews/    ← 客先レビュー記録
 ├── gates/           ← 各審査会の記録

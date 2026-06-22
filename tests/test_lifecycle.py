@@ -103,6 +103,21 @@ GATES = [
 ]
 
 
+def _write_gate_record(root, gate, *, items=2, unchecked=0):
+    """ゲート記録 .jtbc/gates/<gate>_gate.md を生成(承認者がチェックリストを記入した状態)。
+
+    先頭 unchecked 件を [ ]、残りを [x] にする。既定は全 [x](審査完了)。
+    state_guard はゲート移行時に未チェック [ ] の残存を機械ブロックする。
+    """
+    lines = [f"# {gate} ゲート記録", ""]
+    for i in range(items):
+        mark = " " if i < unchecked else "x"
+        lines.append(f"- [{mark}] 審査項目{i + 1}")
+    path = root / ".jtbc" / "gates" / f"{gate}_gate.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def test_full_lifecycle_walks_proposal_to_completed(tmp_path):
     sim = Sim(tmp_path)
 
@@ -127,6 +142,9 @@ def test_full_lifecycle_walks_proposal_to_completed(tmp_path):
         for rel in gate["other_docs"]:
             blocker, err = sim.write_doc(None, rel)
             assert blocker is None, f"{gate['name']}: {rel} の整備がブロックされた ({blocker})"
+
+        # ゲート記録(審査チェックリスト)を全項目 [x] で用意(承認者が記入した状態)
+        _write_gate_record(sim.root, gate["name"])
 
         # まだ承認前 — PMO でも phase を進められない
         blocker, err = sim.update_state("jtbc-pmo", phase=gate["next"])
@@ -170,6 +188,7 @@ def test_full_lifecycle_walks_proposal_to_completed(tmp_path):
     # --- リリース判定(client_review 無し。内部承認で進む) ---
     sim.write_doc("jtbc-tantou", ".jtbc/tests/test_report.md")
     sim.write_doc(None, ".jtbc/deliverables/deliverables_list.md")
+    _write_gate_record(sim.root, "release")
     sim.update_state(None, approvals={"release_gate": {"bucho": "approved", "shacho": "approved"}})
     blocker, err = sim.update_state("jtbc-pmo", phase="RELEASED")
     assert blocker is None, f"リリース移行が通らない ({blocker}: {err})"
@@ -177,6 +196,7 @@ def test_full_lifecycle_walks_proposal_to_completed(tmp_path):
     # --- 完了審査 ---
     sim.write_doc(None, ".jtbc/lessons/lessons_learned.md")
     sim.write_doc(None, ".jtbc/deliverables/completion_approval.md")
+    _write_gate_record(sim.root, "completion")
     sim.update_state(None, approvals={"completion_gate": {"bucho": "approved", "shacho": "approved"}})
     blocker, err = sim.update_state("jtbc-pmo", phase="COMPLETED")
     assert blocker is None, f"完了移行が通らない ({blocker}: {err})"
