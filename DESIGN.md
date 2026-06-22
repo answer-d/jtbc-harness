@@ -187,7 +187,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 {
   "name": "jtbc",
   "displayName": "JTBC — Japanese Traditional Big Company",
-  "version": "0.20.0"
+  "version": "0.21.0"
 }
 ```
 
