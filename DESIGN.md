@@ -46,7 +46,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
                             │
    社長 ─(役員会議/要所のみ)─┐
     │                        ▼
-   部長 ─(承認・助言・要員払出)→ 課長 (PM・お客様窓口) ──┐
+   部長 ─(承認・助言・要員払出)→ 課長 (PM・裏方)　　　 ──┐
                                    │                    │
                                    ▼                    ▼
                               主任 (PL/TL) ───→ 担当
@@ -72,6 +72,10 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
                                     │ - .jtbc/ (ガバナンス)   │
                                     └───────────────────────┘
 ```
+
+> お客様の一次窓口は **営業(= lead = メインセッション = 司令塔)** 一本(Human Gateway。§1.4)。
+> 課長は **裏方PM** で、重要局面のみ営業に同席紹介されて客前で技術説明する。teammate/役職はお客様に直接話さない。
+> ※ 上図 Hooks はガード6種を図示。PreToolUse は他に `memory_grant`(メモ書込の自動承認)を含め計**7種**(正確な内訳は §2.2)。
 
 ### 1.2 構成要素
 
@@ -102,7 +106,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
   "active_ringi": ["CR-003"],
   "active_wbs_task": null,
   "active_incidents": [],
-  "roster": {"shacho":1,"bucho":1,"kacho":1,"shunin":1,"tantou":2},
+  "roster": {"shacho":1,"bucho":1,"kacho":1,"shunin":1,"tantou":2,"pmo":1},
   "approvals": { "proposal_gate": {"kacho":"approved","bucho":"approved","shacho":"approved","at":"2026-06-14"} },
   "client_reviews": { "proposal": {"status":"APPROVED","reviewed_at":"2026-06-14","record":".jtbc/client_reviews/proposal_client_review.md","feedback":[]} },
   "deliverables": {}
@@ -183,10 +187,11 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
 {
   "name": "jtbc",
   "displayName": "JTBC — Japanese Traditional Big Company",
-  "version": "0.4.0"
+  "version": "0.20.0"
 }
 ```
 
+> ※ `version` は `plugins/jtbc/.claude-plugin/plugin.json` / `.claude-plugin/marketplace.json` を正とする(上記は記載例)。
 > `agents/` `commands/` `skills/` `hooks/hooks.json` は規約ディレクトリとして
 > **自動検出**されるため、manifest にパスキーは書かない(明示すると hooks の二重ロード等の
 > 検証エラーになる)。
@@ -199,7 +204,7 @@ JTBCの本質は "制約による品質保証" と "様式による信頼醸成"
     内部審査(ゲート)・変更管理(稟議)・工程内遷移・会議体・インシデント対応・役職振り分け・納品物整備・教訓登録。
     (旧 gate / ringi / shonin / phase / meeting / noubi / kyokun / role / mode コマンドは撤去済み)
   - client-review は通常、内部承認に続けて自動発火する(手動再提示用にコマンドを残置)。
-- **Skills (8)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析) / memory(役職メモ)
+- **Skills (8)**: governance(司令塔) / document-writer / customer-relations(接遇) / requirements-interview(要望ヒアリング) / meetings(会議体) / incident-response(インシデント) / naze-naze(なぜなぜ分析) / role-memory(役職メモ)
 - **Hooks (11)**: PreToolUse 7種 (memory_grant / phase_guard / role_guard / ringi_guard / incident_guard / state_guard / team_guard) + UserPromptSubmit 2種 (superior_visit / approval_sync_guard) + PostToolUse 1種 (memory_timeline) + SubagentStop 1種 (memory_reminder)
   - `memory_grant`: `.jtbc/memory/<役職>/` への書込みを **自動承認**(permissionDecision: allow)し、ユーザーが settings.json に許可を書かずとも役職が確認なしでメモを残せる(バックグラウンド・エージェントの自動拒否も回避)。他役職のメモへの書込みは deny。詳細は `skills/role-memory/SKILL.md`
   - `memory_timeline`: `state.json#phase` 変更時に `.jtbc/memory/_timeline.md` へ「実時刻・役職・新フェーズ」を冪等に追記(決定論的タイムライン)
@@ -250,7 +255,7 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
     │   ├── meetings/SKILL.md
     │   ├── incident-response/SKILL.md
     │   ├── naze-naze/SKILL.md
-    │   └── memory/SKILL.md      (役職メモ / 永続記憶)
+    │   └── role-memory/SKILL.md (役職メモ / 永続記憶)
     ├── hooks/
     │   ├── hooks.json
     │   ├── memory_grant.py      (PreToolUse: .jtbc/memory/書込みを自動承認・他役職メモはdeny)
@@ -284,8 +289,9 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
 ├── designs/         基本/詳細設計書  ├── incidents/        障害報告書
 ├── wbs/             WBS              ├── minutes/          議事録
 ├── risks/           リスク登録簿     ├── client_reviews/   客先レビュー記録
-├── issues/          課題管理簿       ├── gates/
+├── issues/          課題管理簿       ├── gates/            審査記録
 ├── changes/{pending,approved,rejected}/  稟議  └── org/organization.md
+└── memory/<役職>/   役職メモ(永続記憶)。`memory/_timeline.md` にフェーズ足跡を自動記録
 ```
 
 ---
@@ -330,14 +336,20 @@ jtbc-harness/                           ← プラグイン開発リポジトリ
 > internal_approval_first ゲートでは、内部承認の通過に続けて **客先提示が自動発火** する。
 審査会の開催中は phase が一時的に `*_REVIEW`(例: PROPOSAL_REVIEW)になる。
 
+> ※ 上図の ◎=owner(起案)・○=審査関与 は**活動関与度**の表現。承認印を押す承認者(approvers)と
+> 事前レビューのみの reviewers(例: project_plan/release の主任)の区別は **§8・`config/jtbc.yaml#gates` を正**とする。
+
 ### 4.2 稟議(変更管理票)ステートマシン
 
 ```
-DRAFT ─submit→ PENDING_SHUNIN → PENDING_KACHO → PENDING_BUCHO → [PENDING_SHACHO] → APPROVED
-                     │               │               │                │
-                     └───────────────┴───────────────┴────────────────┴──→ REJECTED (任意段で却下)
+DRAFT ─submit→ 承認者を上位順に1人ずつ回覧(起案者は除外) → APPROVED
+                          │
+                          └──→ REJECTED (任意段で却下)
 ```
 
+承認経路は **CR 種別ごとに `config/jtbc.yaml#ringi_workflow` で定義**(起案者=承認者から除外。
+gate と同じく自己承認しない)。技術系(requirement/design/tech_stack/effort)は **主任が起案** →
+課長→部長(→社長) が承認。scope は **課長が起案** → 部長→社長 が承認。
 承認はファイル内 frontmatter の `approvals` に追記し、承認パス表に **承認印(🔴)** を押す。
 APPROVED で `pending/ → approved/` へ移動。経路を飛ばした承認は `ringi_guard.py` が阻止。
 
@@ -359,80 +371,31 @@ APPROVED で `pending/ → approved/` へ移動。経路を飛ばした承認は
 | リリース判定会 | ○ | ○ | ◎ | ○ | - |
 | PJ完了審査 | ○ | ○ | ◎ | - | - |
 
-◎ = 主担当 / ○ = 副担当 / - = 不在
+◎ = 主担当 / ○ = 副担当 / - = 不在(本表は各フェーズの**活動関与度**。承認者(approvers)/事前レビュー(reviewers)の区別は §8・`config/jtbc.yaml#gates` を正とする)
 
 ---
 
 ## 5. 各役職のシステムプロンプト (要旨)
 
-実装は `plugins/jtbc/agents/jtbc-*.md` 参照。
+> 各役職の責務・権限・触れてよいパスの **正本は `plugins/jtbc/agents/jtbc-*.md`**
+> (権限の物理強制は `hooks/role_guard.py` / `phase_guard.py`)。ここは索引のみ — 詳細はそちらを参照。
 
-### 5.1 社長 (jtbc-shacho) — `tools: Read, Write, Edit, Grep, Glob`
-- **基本的にプロジェクト活動に参加しない**。最終意思決定・優先順位決定・重篤問題時の責任者
-- 部長から報告を受け、事業判断・ドキュメントレビュー・思いつきアドバイス
-- 登場するのは 提案審査 / リリース判定会 / PJ完了審査 / 役員会議 / 重篤インシデント / 上長視察 のみ
-- 技術はほぼ分からない(ビジネス観点のみ)
-- Edit はガバナンス文書(`.jtbc/` 配下)への追記用。src への書込みは role_guard/phase_guard が引き続き禁止
-
-### 5.2 部長 (jtbc-bucho) — `tools: Read, Write, Edit, Grep, Glob`
-- 課長が回すプロジェクトへの **助言が中心**。文書レビュー、社長との思考ギャップの橋渡し
-- フェーズゲート・稟議の **承認者**。**追加要員(担当)の払い出し権限** を持つ
-- 社長のアドバイス反映が必要なら **自分でやらず課長へ依頼**
-- 重篤問題時は課長とともにユーザーへ謝罪。技術知識は5〜10年前で停止(リスク判断者)
-- Edit はガバナンス文書(`.jtbc/` 配下)への追記用。src への書込みは role_guard/phase_guard が引き続き禁止
-
-### 5.3 課長 (jtbc-kacho) — `tools: Read, Write, Edit, Grep, Glob`
-- **プロジェクトマネージャー**。プロジェクトを成功裡に終わらせることが至上命題
-- 通常の意思決定・優先順位策定、**プロジェクト責任問題のオーナー**
-- 提案書・計画書・要件定義書・基本設計書・リスク・課題を起案
-- **お客様窓口**(客先定例/客先報告会議のファシリ)。追加要員が要るなら部長に相談
-- Edit はガバナンス文書(`.jtbc/` 配下)への追記用。src への書込みは role_guard/phase_guard が引き続き禁止
-
-### 5.4 主任 (jtbc-shunin) — `tools: Read, Write, Edit, Grep, Glob, Bash`
-- **プロジェクトリーダー/テックリード**。詳細設計・WBS・テスト計画・影響範囲分析
-- 担当への **業務分担をコントロール・割り振り**(担当が複数なら配分)。**自分でも実装可能**
-- 内部定例のファシリ。実装系工程の進行(完了確認で司令塔が自動遷移)
-
-### 5.5 担当 (jtbc-tantou) — `tools: Read, Write, Edit, Grep, Glob, Bash`
-- 課長・主任の指示のもと、特定WBSタスクの実装・テスト・雑用
-- 要件/設計/スコープ変更は単独で行わず稟議
-- active_wbs_task の "触ってよいファイル" 以外は触らない
-- 増員(2人目以降)は部長承認で払い出す(主任が配分)
-
-### 5.6 PMO (jtbc-pmo) — `tools: Read, Write, Edit, Grep, Glob`
-- **プロセスの門番**。ライン職(社長〜担当)とは直交する **部長直下のスタッフ職**(PMBOK)
-- **フェーズ移行(`state.json#phase` の書き換え)を行える唯一の役職**。ゲート承認の充足・必要書類の
-  整備・客先承認・方針(バッファ20%/教訓3件等)を機械検証してから工程を進める(`state_guard` が物理担保)
-- **受注後の立ち上げ・計画を主導**: プロジェクト計画書・リスク登録簿・WBS骨子を **実作業の前に** 整える
-  (「雛形だけ置いて中身は後で」を許さない)。リスク/課題/スケジュールを継続監視
-- **成果物の品質承認(🔴 押印)はしない**(品質承認はゲート承認者=部長/社長)。PMO が見るのはプロセス適合
-- 提案/要件/設計の起案・改訂はしない(課長/主任の領域)。コードも書かない
+| 役職 | 一言 | 定義ファイル |
+|---|---|---|
+| 社長 (shacho) | 最終意思決定・要所のみ登場。技術には踏み込まない | `agents/jtbc-shacho.md` |
+| 部長 (bucho) | 承認・助言・要員払い出し。自ら手は動かさない | `agents/jtbc-bucho.md` |
+| 課長 (kacho) | **PM(裏方)**。提案/要件/設計/計画/WBS/課題/教訓/納品一覧の owner | `agents/jtbc-kacho.md` |
+| 主任 (shunin) | PL/テックリード。詳細設計・WBS詳細化・割り振り・実装 | `agents/jtbc-shunin.md` |
+| 担当 (tantou) | 実装担当。`active_wbs_task` の範囲で実装・テスト | `agents/jtbc-tantou.md` |
+| PMO (pmo) | プロセスの門番。フェーズ移行(唯一)・計画の号令と検証。**文書は書かず検証する** | `agents/jtbc-pmo.md` |
 
 ---
 
 ## 6. 各ドキュメントのテンプレート
 
-17種類を `templates/` に配置。各テンプレ末尾に文書管理情報(作成者/承認者/状態)を持つ。
-
-| ファイル | ドキュメント | 作成者 | 承認(審査) |
-|---|---|---|---|
-| `proposal.md` | 提案書 | 課長 | 提案審査(課長→部長→社長) |
-| `project_plan.md` | プロジェクト計画書 | 課長 | PJ計画審査(部長) |
-| `requirements.md` | 要件定義書 | 課長 | PJ計画審査(部長+課長) |
-| `basic_design.md` | 基本設計書 | 課長 | 基本設計審査(課長+部長) |
-| `detailed_design.md` | 詳細設計書 | 主任 | 詳細設計審査(課長) |
-| `wbs.md` | WBS | 主任 | 詳細設計審査 |
-| `risk_register.md` | リスク登録簿 | 課長 | 部長レビュー |
-| `issue_log.md` | 課題管理簿 | 課長/主任 | 基本設計審査 |
-| `change_request.md` | 変更管理票(稟議) | 起票者(誰でも) | type別経路 |
-| `test_plan.md` | テスト計画書 | 主任 | 詳細設計審査 |
-| `test_report.md` | テスト結果報告書 | 担当 | リリース判定会 |
-| `deliverables_list.md` | 納品一覧 | 課長/主任 | リリース判定会 |
-| `lessons_learned.md` | 教訓登録簿 | 担当+主任 | PJ完了審査(課長+部長) |
-| `completion_approval.md` | プロジェクト完了承認書 | 課長 | PJ完了審査(課長→部長→社長) |
-| `incident_report.md` | 障害報告書 | 課長 | ユーザー提出(部長確認) |
-| `meeting_minutes.md` | 議事録 | ファシリテーター | 出席者/お客様 |
-| `client_review.md` | 客先レビュー記録 | 課長 | お客様確認(社内審査の前提) |
+17種類を `templates/` に配置。各テンプレ末尾の **文書管理情報(作成者/承認者/状態)を正** とする。
+作成者(owner)・承認者の対応は **`config/jtbc.yaml#gates`(owner/approvers)** と各テンプレを参照
+(WBS・課題管理簿・教訓登録簿・納品一覧の owner は課長=PM。詳細設計書・テスト計画は主任)。
 
 ---
 
@@ -441,13 +404,15 @@ APPROVED で `pending/ → approved/` へ移動。経路を飛ばした承認は
 変更管理(稟議)は **お客様の操作ではなく、司令塔(governance)が起票〜承認まで自動処理** する
 (旧 `/jtbc:ringi` / `/jtbc:shonin` コマンドは撤去済み。お客様には結果だけを丁重にご報告する)。
 
-| 変更種別 | 起票 | 承認経路 |
+承認経路の正本は `config/jtbc.yaml#ringi_workflow`。**起案者は承認者から除外**(自己承認しない)。
+
+| 変更種別 | 起案者 | 承認経路(起案者を除く・上位順) |
 |---|---|---|
-| 要件変更 | 担当/課長 | 主任 → 課長 → 部長 → 社長 |
-| 設計変更 | 主任/課長 | 主任 → 課長 → 部長 |
-| 技術選定変更 | 主任/担当 | 主任 → 課長 → 部長 |
-| スコープ変更 | 課長/部長 | 課長 → 部長 → 社長 |
-| 工数追加 | 担当/主任 | 主任 → 課長 → 部長 |
+| 要件変更 (requirement) | 主任 | 課長 → 部長 → 社長 |
+| 設計変更 (design) | 主任 | 課長 → 部長 |
+| 技術選定変更 (tech_stack) | 主任 | 課長 → 部長 |
+| スコープ変更 (scope) | 課長 | 部長 → 社長 |
+| 工数追加 (effort) | 主任 | 課長 → 部長 |
 
 hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を物理的に阻止する。
 実行ロジックの正本は `skills/governance/SKILL.md`「変更管理(稟議)の自動処理」。
@@ -460,14 +425,9 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 **発動はユーザー操作ではなく、司令塔(governance)が発火条件を満たしたときに自動開催する**
 (旧 `/jtbc:gate` コマンドは撤去済み)。実行ロジックの正本は `skills/governance/SKILL.md`。
 
-| gate | 前→次 | 必要書類 | 承認者 | 客先提示 |
-|---|---|---|---|---|
-| proposal (提案審査) | 提案→要件定義 | 提案書 | 課長,部長,社長 | 内部承認後に提示 |
-| project_plan (PJ計画審査) | 要件定義→基本設計 | 計画書,要件定義書,リスク登録簿 | 課長,部長,主任 | 内部承認後に提示 |
-| basic_design (基本設計審査) | 基本設計→詳細設計 | 基本設計書,課題管理簿 | 課長,部長 | 内部承認後に提示 |
-| detailed_design (詳細設計審査) | 詳細設計→実装 | 詳細設計書,WBS,テスト計画書 | 課長,主任,部長 | 内部承認後に提示 |
-| release (リリース判定会) | 総合テスト→リリース済 | テスト結果報告書,納品一覧 | 課長,主任,部長,社長 | — |
-| completion (PJ完了審査) | リリース済→完了 | 教訓登録簿,完了承認書 | 課長,部長,社長 | — |
+> 6ゲートの「前→次 phase / 必要書類 / 承認者(approvers) / 事前レビュー(reviewers) / 客先提示」の一覧は
+> **`config/jtbc.yaml#gates` と `skills/governance/SKILL.md` のゲート表を正** とする(approvers と reviewers の
+> 区別もそちらが正確)。以下はゲート設計の要点(rationale)のみ。
 
 - **内部承認 → 客先提示の順序(重要)**: 提案/要件/基本設計/詳細設計の各ゲートは `internal_approval_first: true`。
   まず **内部審査(自動開催)** で **上位承認(内部承認)** を得て、**続けて自動発火する客先提示** で
@@ -499,7 +459,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 | 会議 | ファシリ | 参加者 | 頻度 |
 |---|---|---|---|
 | プロジェクト内部定例 | 主任 | 課長・担当 | 高 |
-| プロジェクト客先定例 | 課長 | お客様・主任・担当 | 中 |
+| プロジェクト客先定例 | 営業 | お客様・課長・主任・担当 | 中 |
 | 社内プロジェクト状況報告定例 | 課長 | 部長・主任・担当 | 中 |
 | 社内役員会議 | 部長 | 社長 | 低 |
 
@@ -507,7 +467,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 | 会議 | ファシリ | 参加者 | トリガー |
 |---|---|---|---|
-| 客先報告会議 | 課長 | 主任・(担当) | 課題・問題・インシデント発生時 |
+| 客先報告会議 | 営業 | 課長・部長・主任・担当 | 課題・問題・インシデント発生時 |
 
 ### 9.3 ランダムイベント: 上長視察
 
@@ -540,7 +500,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 ユーザーは「JTBCに開発を発注したお客様」。ユーザー向け応答は受注ベンダーの窓口として丁重な敬語で行う(`customer-relations` skill)。
 
-- 窓口は原則 **課長**、重要局面は **部長**、決裁は **社長**。担当・主任は原則前面に出ない
+- お客様の一次窓口は **営業(= lead = メインセッション)** 一本(Human Gateway)。課長は裏方PMで、重要局面(技術説明・お詫び)のみ営業に同席紹介されて客前に立つ。決裁は **社長**。担当・主任は前面に出ない
 - 受注御礼(提案ご承認時)、進捗ご報告、ご要望の受領、お詫び(インシデント時)に定型トーンを用意
 - 安請け合いしない。スコープ・納期の約束は社内手続き(稟議・審査)を経てから
 - **要望ヒアリングは1問ずつ・推奨案つき**(`requirements-interview` / `/jtbc:hearing`、grill-me 方式)
@@ -561,7 +521,7 @@ hook(`ringi_guard.py`)が、稟議未承認の要件/設計書の直接改訂を
 
 | 施策 | 内容 | 実装箇所 |
 |---|---|---|
-| **要望ヒアリング** | 課長が1問ずつ・推奨案つきで要望を引き出し共通理解を得る(grill-me 方式) | requirements-interview skill / hearing command |
+| **要望ヒアリング** | 営業(lead)が1問ずつ・推奨案つきでお客様に問い(課長が聞く項目=決定木を設計)、共通理解を得る(grill-me 方式) | requirements-interview skill / hearing command |
 | **客先レビュー(ご査収)** | 社内の内部承認を得た成果物を、パス明示で「ご査収ください」とお客様へ提示し承認を賜る(内部承認後に自動発火) | governance skill / client-review command(手動再提示用) / client_review template |
 | **根回し** | 審査会(自動開催)前に owner が承認者へ事前説明し論点を潰す | governance skill |
 | **報連相** | 指揮系統を飛ばさない。悪い報告ほど早く | governance skill / 各agent |
@@ -614,12 +574,12 @@ mode yaml と対応する役職 agent を追加すれば新文化を足せるア
    内部承認済みの提案書を「ご査収ください」と提示 → お客様ご承認 → **受注御礼(フル定型)** で
    PMO が要件定義へ phase を進める
    ※ お客様は審査を操作しない。審査は自動開催され、承認依頼だけがお客様へ上がる
-3.5 (受注後キックオフ)PMO を spawn → 実作業の前に プロジェクト計画書・リスク登録簿・WBS骨子を整備
-   (空のまま先へ進まない。PMBOK 的な立ち上げ・計画)
-4. 課長が要件定義書、PMO/課長が計画書・リスク登録簿を作成 → (自動)PJ計画審査(計画書+要件+リスクが必須)→
+3.5 (受注後キックオフ)PMO を spawn → 課長に プロジェクト計画書・リスク登録簿・WBS骨子 を整備させ、
+   PMO は充足・逸脱を検証(空のまま先へ進まない。PMBOK 的な立ち上げ・計画。PMO 自身は文書を書かない)
+4. 課長が要件定義書・計画書・リスク登録簿を作成(PMO はプロセス検証)→ (自動)PJ計画審査(計画書+要件+リスクが必須)→
    (自動)客先提示でお客様承認 → PMO が基本設計へ phase を進める
 5. 課長が基本設計 → (自動)基本設計審査 → (自動)客先提示でお客様承認
-6. 主任が詳細設計・WBS・テスト計画 → (自動)詳細設計審査 → (自動)客先提示でお客様承認
+6. 主任が詳細設計・WBS詳細化(owner=課長)・テスト計画 → (自動)詳細設計審査 → (自動)客先提示でお客様承認
 7. 主任が担当へタスクを割り振り、実装(役職振り分けは司令塔が自動)
 8. (自動)工程内遷移で 実装→単体テスト→総合テスト と進む(主任の完了確認を起点に司令塔が自動遷移)
 9. 実装中に要件変更ニーズ発覚 → (自動)変更管理(稟議)を起票し 主任→課長→部長→社長 が自動承認 → 結果をご報告

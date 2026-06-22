@@ -83,13 +83,16 @@ ROLE_RULES: dict[str, dict[str, list[str]]] = {
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/"],
     },
     "pmo": {
-        # PMO: プロセスの門番。phase 移行の正本管理(state.json)と PM プロセス文書を扱う。
-        # 提案/要件/設計の起案・改訂はしない(課長/主任の領域)。コードも書かない。
-        "allow": [r"^\.jtbc/state\.json", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/gates/", r"^\.jtbc/issues/", r"^\.jtbc/deliverables/", r"^\.jtbc/lessons/", r"^\.jtbc/minutes/", r"^\.jtbc/changes/pending/"],
-        "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/proposal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/"],
+        # PMO: プロセスの門番。phase 移行の正本管理(state.json)・ゲート検証記録(gates)・
+        # 成果物ステータス台帳(deliverables)・会議記録(minutes)など「プロセス/ガバナンスの記録」を扱う。
+        # PMBOK 上、プロジェクト文書(計画書/リスク登録簿/WBS/課題管理簿/教訓登録簿)と提案/要件/設計、
+        # 稟議の起案・記載はすべて PM(課長)/主任の領域。PMO は中身を「書かず」「検証する」。コードも書かない。
+        "allow": [r"^\.jtbc/state\.json", r"^\.jtbc/gates/", r"^\.jtbc/deliverables/", r"^\.jtbc/minutes/"],
+        "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/proposal/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/", r"^\.jtbc/plans/", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/issues/", r"^\.jtbc/lessons/", r"^\.jtbc/changes/pending/"],
     },
     "kacho": {
-        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/risks/", r"^\.jtbc/issues/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
+        # 課長(PM)は WBS の owner。骨子を起案し、メンバー(主任のタスク分解・担当の進捗更新)の編集を束ねて維持する。
+        "allow": [r"^\.jtbc/proposal/", r"^\.jtbc/plans/", r"^\.jtbc/requirements/", r"^\.jtbc/designs/basic_design", r"^\.jtbc/risks/", r"^\.jtbc/wbs/", r"^\.jtbc/issues/", r"^\.jtbc/lessons/", r"^\.jtbc/deliverables/", r"^\.jtbc/gates/", r"^\.jtbc/changes/pending/", r"^\.jtbc/incidents/", r"^\.jtbc/minutes/", r"^\.jtbc/client_reviews/"],
         "deny": [r"^src/", r"^lib/", r"^app/", r"^pkg/", r"^internal/", r"^\.jtbc/designs/detailed_design"],
     },
     "shunin": {

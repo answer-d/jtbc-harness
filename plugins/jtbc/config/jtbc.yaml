@@ -17,7 +17,8 @@ roles:
 # プロセス職。部長直下のスタッフ機能として、PMBOK に沿ったプロセス適合を監督する。
 # - **フェーズ移行(state.json#phase の書き換え)を行える唯一の役職**。ゲート承認の充足・
 #   必要書類の整備・客先承認を機械検証してから工程を進める(state_guard.py が物理担保)。
-# - 受注後の立ち上げ・計画(プロジェクト計画書/リスク登録簿/WBS骨子)を主導する。
+# - 受注後の立ち上げ・計画では、課長(owner)による計画文書(プロジェクト計画書/リスク登録簿/WBS骨子)の
+#   整備を働きかけ、充足・逸脱を検証する。**PMO 自身は計画文書を書かない**(中身は課長/主任の領域)。
 # - **成果物の品質承認(押印)はしない**(それはゲート承認者=部長/社長の責務)。プロセスのみ見る。
 process_office:
   persona: pmo
@@ -147,9 +148,10 @@ gates:
     previous_phase: DETAILED_DESIGN
     review_phase: DETAILED_DESIGN_REVIEW
     next_phase: IMPLEMENTATION
-    owner: shunin
+    owner: shunin                 # 起案者は詳細設計書を主体とする主任。WBS の owner は課長だが、
+                                  # ゲート owner を課長にすると自分の成果物を承認できず承認連鎖が壊れるため主任のまま
     internal_approval_first: true # 内部承認(gate)→ 客先提示(client-review)→ phase 遷移
-    required_documents: [detailed_design, wbs, test_plan]
+    required_documents: [detailed_design, wbs, test_plan]  # wbs の owner は課長(主任が詳細タスクを記載)
     approvers: [kacho, bucho]     # 起案者 shunin を除外(課長・部長が承認)
     client_review:                # 内部承認後にお客様へ提示する客先レビュー
       reviews: 詳細設計書
