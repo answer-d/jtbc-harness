@@ -201,6 +201,12 @@ ringi_required_for:
 # 技術系CR(requirement/design/tech_stack/effort)は主任が起案するため主任を除外、
 # scope は課長が起案するため課長を除外する。いずれも残る承認者は起案者より上位のみで構成される。
 # 起案者は frontmatter の created_by に記録し、承認パスには現れない。
+#
+# CR の type は単一の予想値ではなく「改訂対象ドキュメント(CR 5章)」から導出される複数可の従属情報。
+# 複数種別を伴う変更(例: 要件と設計に跨る)の承認経路は、宣言した全種別の承認者の **和集合**
+# (重複排除・回覧順=最上位まで)で構成する。例) [requirement, design] → kacho→bucho→shacho。
+# 過小承認を防ぐため、和集合は常に最も厳しい(最上位を含む)経路に倒す。
+# 一貫性は ringi_consistency(起票時)と ringi_guard(解錠時)が機械検証する。
 ringi_workflow:
   requirement: [kacho, bucho, shacho]   # 起案者 shunin を除外
   design:      [kacho, bucho]           # 起案者 shunin を除外
@@ -276,6 +282,10 @@ incident:
   rca_method: naze_naze
   closing_document: incident_report
 
+# プロジェクトとして最低限そろえるべき成果物一式(=存在チェックの対象)。
+# 客先へ引き渡す「納品成果物」と社内保管の「プロジェクト文書」の両方を含む完全性チェックであり、
+# 客先納品スコープそのものではない(納品スコープは deliverables_list.md §1「納品成果物一覧」が正)。
+# wbs / lessons_learned / completion_approval は社内プロジェクト文書(同 §2)に該当する。
 deliverables_minimum:
   - source_code
   - proposal
@@ -290,7 +300,7 @@ deliverables_minimum:
   - lessons_learned
   - completion_approval
 
-documents_required: ["00", "01", "02", "03", "04", "05", "06", "07", "09", "10", "11", "12", "13"]
+documents_required: ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13"]
 
 policies:
   buffer_minimum_pct: 20

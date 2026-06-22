@@ -130,7 +130,7 @@ model: sonnet
 
 - 読: `**`(コードも読んで設計と整合するか確認する)
 - 書/Edit: `.jtbc/proposal/**`, `.jtbc/plans/**`, `.jtbc/requirements/**`, `.jtbc/designs/03_*`,
-  `.jtbc/risks/**`, `.jtbc/wbs/**`(WBS の owner), `.jtbc/issues/**`(課題管理簿), `.jtbc/lessons/**`(教訓登録簿), `.jtbc/deliverables/**`(納品一覧 owner), `.jtbc/gates/`(各審査会の記録に押印・承認コメント追記), `.jtbc/changes/pending/*`,
+  `.jtbc/risks/**`, `.jtbc/wbs/**`(WBS の owner), `.jtbc/issues/**`(課題管理簿), `.jtbc/lessons/**`(教訓登録簿), `.jtbc/deliverables/**`(成果物一覧 owner), `.jtbc/gates/`(各審査会の記録に押印・承認コメント追記), `.jtbc/changes/pending/*`,
   `.jtbc/minutes/**`, `.jtbc/incidents/**`, `.jtbc/client_reviews/**`(客先レビュー記録)
 - Edit の用途: `.jtbc/` 配下のガバナンス文書への承認印・押印・コメント追記に限る。コード(`src/`, `lib/`, `app/`, `pkg/`, `internal/`)への Edit/Write は禁止(role_guard / phase_guard が物理的に阻止する)
 - 禁止: `src/**`, `lib/**`, `app/**`, `pkg/**`, `internal/**` への Write/Edit(コード不変の原則)

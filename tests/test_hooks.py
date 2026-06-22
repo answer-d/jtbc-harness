@@ -289,6 +289,153 @@ def test_ringi_guard_blocks_non_approver_revision(project):
     assert r.blocked and "[ringi_guard]" in r.stderr
 
 
+def test_ringi_guard_allows_cross_cutting_cr_with_type_list(project):
+    from conftest import run_hook
+    # 横断変更: 1枚の CR で type を複数宣言し、要件と基本設計の双方を解錠できる
+    p = project(phase="DETAILED_DESIGN")
+    cr = (
+        "---\n"
+        "status: APPROVED\n"
+        "type: [requirement, design]\n"
+        "---\n"
+        "改訂対象:\n"
+        "  - .jtbc/requirements/requirements.md\n"
+        "  - .jtbc/designs/basic_design.md\n"
+    )
+    p.write_doc(".jtbc/changes/approved/CR-010.md", cr)
+    for target in (".jtbc/requirements/requirements.md",
+                   ".jtbc/designs/basic_design.md"):
+        payload = p.payload(agent_type="jtbc:jtbc-bucho", tool_name="Edit",
+                            tool_input={"file_path": target})
+        # bucho は requirements/design いずれの承認者でもあるが、ここでは
+        # CR 解錠ルート(対象パス ∧ type 充足)が効いていることを確認する目的。
+        r = run_hook("ringi_guard", payload)
+        assert r.passed, target
+
+
+def test_ringi_guard_blocks_when_type_does_not_cover_target(project):
+    from conftest import run_hook
+    # 改訂対象に basic_design を挙げているが type が requirement のみ = 種別不足。
+    # 無言で詰まらせず、不足種別 'design' を名指しでブロックすること。
+    p = project(phase="DETAILED_DESIGN")
+    cr = (
+        "---\n"
+        "status: APPROVED\n"
+        "type: requirement\n"
+        "---\n"
+        "改訂対象:\n"
+        "  - .jtbc/designs/basic_design.md\n"
+    )
+    p.write_doc(".jtbc/changes/approved/CR-011.md", cr)
+    payload = p.payload(agent_type="jtbc:jtbc-shunin", tool_name="Edit",
+                        tool_input={"file_path": ".jtbc/designs/basic_design.md"})
+    r = run_hook("ringi_guard", payload)
+    assert r.blocked
+    assert "design" in r.stderr and "CR-011" in r.stderr
+
+
+def test_ringi_guard_ignores_paths_inside_html_comments(project):
+    from conftest import run_hook
+    # 記入例(HTMLコメント)に書かれただけの対象パスでは解錠しない
+    p = project(phase="BASIC_DESIGN")
+    cr = (
+        "---\n"
+        "status: APPROVED\n"
+        "type: requirement\n"
+        "---\n"
+        "<!-- 例: .jtbc/requirements/requirements.md -->\n"
+        "改訂対象:\n"
+        "  -\n"
+    )
+    p.write_doc(".jtbc/changes/approved/CR-012.md", cr)
+    payload = p.payload(agent_type="jtbc:jtbc-shunin", tool_name="Edit",
+                        tool_input={"file_path": ".jtbc/requirements/requirements.md"})
+    r = run_hook("ringi_guard", payload)
+    assert r.blocked
+
+
+# ---------------------------------------------------------------------------
+# ringi_consistency: CR の type が改訂対象を覆っているかを起票時に検証
+# ---------------------------------------------------------------------------
+
+def _cr_payload(p, content, rel=".jtbc/changes/CR-020.md"):
+    return p.payload(agent_type="jtbc:jtbc-shunin", tool_name="Write",
+                     tool_input={"file_path": rel, "content": content})
+
+
+def test_ringi_consistency_blocks_insufficient_type(project):
+    from conftest import run_hook
+    # basic_design を改訂対象に挙げているのに type に design が無い → 起票時にブロック
+    p = project(phase="DETAILED_DESIGN")
+    content = (
+        "---\n"
+        "type: [requirement]\n"
+        "status: DRAFT\n"
+        "---\n"
+        "## 5. 影響範囲分析\n"
+        "- 改訂対象ドキュメント:\n"
+        "  - .jtbc/requirements/requirements.md\n"
+        "  - .jtbc/designs/basic_design.md\n"
+    )
+    r = run_hook("ringi_consistency", _cr_payload(p, content))
+    assert r.blocked
+    assert "design" in r.stderr and "[ringi_consistency]" in r.stderr
+
+
+def test_ringi_consistency_allows_when_type_covers_targets(project):
+    from conftest import run_hook
+    p = project(phase="DETAILED_DESIGN")
+    content = (
+        "---\n"
+        "type: [requirement, design]\n"
+        "status: DRAFT\n"
+        "---\n"
+        "## 5. 影響範囲分析\n"
+        "- 改訂対象ドキュメント:\n"
+        "  - .jtbc/requirements/requirements.md\n"
+        "  - .jtbc/designs/basic_design.md\n"
+    )
+    r = run_hook("ringi_consistency", _cr_payload(p, content))
+    assert r.passed
+
+
+def test_ringi_consistency_ignores_example_paths_in_comments(project):
+    from conftest import run_hook
+    # 新規スキャフォルド(記入例がコメントに残るだけ)は誤ブロックしない
+    p = project(phase="PROPOSAL")
+    content = (
+        "---\n"
+        "type: [requirement]\n"
+        "status: DRAFT\n"
+        "---\n"
+        "## 5. 影響範囲分析\n"
+        "- 改訂対象ドキュメント:\n"
+        "  <!-- 例:\n"
+        "    - .jtbc/designs/basic_design.md\n"
+        "    - .jtbc/designs/detailed_design.md -->\n"
+        "  -\n"
+    )
+    r = run_hook("ringi_consistency", _cr_payload(p, content))
+    assert r.passed
+
+
+def test_ringi_consistency_skips_non_cr_and_edit(project):
+    from conftest import run_hook
+    p = project(phase="DETAILED_DESIGN")
+    # CR 以外のパスは対象外
+    r1 = run_hook("ringi_consistency", p.payload(
+        tool_name="Write",
+        tool_input={"file_path": ".jtbc/designs/basic_design.md",
+                    "content": "type: [requirement]\n.jtbc/designs/basic_design.md"}))
+    assert r1.passed
+    # Edit は全文不明のためスキップ(解錠時に ringi_guard が最終防衛)
+    r2 = run_hook("ringi_consistency", p.payload(
+        tool_name="Edit",
+        tool_input={"file_path": ".jtbc/changes/CR-021.md",
+                    "old_string": "a", "new_string": "b"}))
+    assert r2.passed
+
+
 # ---------------------------------------------------------------------------
 # state_guard: フェーズ移行の権限(PMO限定)+ 事前条件
 # ---------------------------------------------------------------------------
